@@ -1,0 +1,23 @@
+{
+  "extends": "../../deepseek-harness/tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types",
+    "jsx": "react-jsx",
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "composite": false,
+    "incremental": false,
+    "types": [],
+    "baseUrl": ".",
+    "paths": {
+      "@deepseek-ai/cordis": ["../../deepseek-harness/vendor/cordis/src"],
+      "@deepseek-ai/schemastery": ["../../deepseek-harness/vendor/schemastery/src"],
+      "@deepseek-ai/dsh-agent": ["../../deepseek-harness/packages/core/agent/src/index.ts"],
+      "@deepseek-ai/dsh-llm": ["../../deepseek-harness/packages/llm/llm/src/index.ts"],
+      "@deepseek-ai/dsh-settings": ["../../deepseek-harness/packages/settings/settings/src/index.ts"]
+    }
+  },
+  "include": ["src"],
+  "references": []
+}
