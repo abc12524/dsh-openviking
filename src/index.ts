@@ -317,18 +317,8 @@ export function apply(ctx: Context, entry: CompositionConfig): void {
     const settings = rootCtx.get('settings') as
       | { register<T>(ns: string, schema: z<OpenVikingConfig>, opts?: { base?: Partial<T> }): { get(): T }; describe(): Array<{ ns: string }> }
       | undefined
-    if (settings === undefined) {
-      console.log('openviking-debug: tryRegister, settings still absent (rootCtx used)')
-      return
-    }
+    if (settings === undefined) return
     try {
-      // Identify which settings instance this is before registering.
-      const proto = Object.getPrototypeOf(settings)
-      const ctorName = (proto as { constructor?: { name?: string } })?.constructor?.name ?? 'unknown'
-      const hasDocumentPath = typeof (settings as { documentPath?: unknown }).documentPath
-      const rootObj = (ctx as unknown as { root?: object }).root
-      const isAppRoot = rootObj === (globalThis as unknown as { __dshAppRoot?: object }).__dshAppRoot
-      console.log(`openviking-debug: settings ctor=${ctorName} docPath=${hasDocumentPath} rootDescribe=${String((settings.describe() as Array<{ ns: string }>).length)} isAppRoot=${String(isAppRoot)}`)
       const scope = settings.register<OpenVikingConfig>(OPENVIKING_NS, Config, {
         base: {
           url: entry.url,
@@ -340,9 +330,8 @@ export function apply(ctx: Context, entry: CompositionConfig): void {
       })
       current = () => scope.get()
       registered = true
-      console.log('openviking-debug: register OK, settings describe count:', settings.describe().length, 'names:', JSON.stringify(settings.describe().map((d: { ns: string }) => d.ns)))
     } catch (error) {
-      console.log('openviking-debug: register FAILED:', error instanceof Error ? error.message : String(error))
+      ctx.logger.warn(`openviking: settings namespace register failed: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
   // Try once immediately (settings may already exist), then on every service

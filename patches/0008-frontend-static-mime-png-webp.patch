@@ -1,0 +1,13 @@
+diff --git a/packages/host/frontend-static/src/index.ts b/packages/host/frontend-static/src/index.ts
+index 7d0f409f03..88417299ba 100644
+--- a/packages/host/frontend-static/src/index.ts
++++ b/packages/host/frontend-static/src/index.ts
+@@ -42,6 +42,8 @@ const MIME: Record<string, string> = {
+   '.json': 'application/json',
+   '.map': 'application/json',
+   '.webmanifest': 'application/manifest+json',
++  '.png': 'image/png',
++  '.webp': 'image/webp'
+ }
+ 
+ /**

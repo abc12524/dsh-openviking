@@ -9,7 +9,7 @@ DeepSeek Harness (dsh) 的 OpenViking 长期记忆集成插件。
 
 ## 依赖
 
-- DeepSeek Harness 源码检出，以及本插件 tsconfig 路径别名所依赖的目录结构。`tsconfig.json` 与 `tsdown.client.ts` 通过 `../../deepseek-harness` 相对路径引用 Harness（**按你的实际部署位置调整**）。
+- DeepSeek Harness 源码检出，以及本插件 tsconfig 路径别名所依赖的目录结构。`tsconfig.json`（paths 别名）与 `tsdown.client.ts`（alias 配置）默认通过 `../../deepseek-harness` 相对路径引用 Harness；若仓库不在该位置，请把**两处**路径都改为指向你的 dsh 检出的实际路径（相对或绝对均可），否则 `pnpm run build:client` 找不到模块。
 - 一个 OpenViking 记忆服务（MCP Streamable HTTP 端点，如 `http://<host>:1933/mcp`）。
 
 ## 安装
@@ -26,12 +26,37 @@ DeepSeek Harness (dsh) 的 OpenViking 长期记忆集成插件。
         minScore: 0.4
 ```
 
-要让 Web 设置页显示表单，还需满足：
+要让 Web 设置页显示表单，还需要在 dsh 侧应用 `patches/` 中的补丁（已在本机验证，基于 dsh 上游 `47f943859b` 导出）：
 
-1. `openviking` 命名空间加入 Harness API 网关的 `WEB_SETTINGS_NAMESPACES` 白名单（`packages/host/apiproxy/src/api-proxy.ts`），否则 API 层 `settings-not-exposed` 拒绝读写；
-2. `dsh-client-modules` 注册表能解析本包的 `dsh.client` 声明（路径型 loader entry 需要 package.json 查找补丁）。
+| 补丁 | 必需 | 作用 |
+|---|---|---|
+| `0001-connection-privileged-methods-trusted-host.patch` | ✅ | 特权 API（settings/credentials/agentPreset 等）在 `--trusted-host` 下放行，LAN 可写 |
+| `0002-client-modules-path-entry-resolution.patch` | ✅ | 路径型插件 entry 解析 package.json，前端 manifest 能加载本插件（否则设置页静默不显示） |
+| `0003-settings-scope-host-mode.patch` | ✅ | LAN 访问时设置页不再降级 memory（否则恒显"设置服务不可用"） |
+| `0004-apiproxy-openviking-settings-whitelist.patch` | ✅ | `openviking` 命名空间加入 settings API 白名单（否则 `settings-not-exposed`） |
+| `0005-ui-settings-models-welcome-notice-host-mode.patch` | 可选 | 内测声明弹窗不再每次刷新都弹 |
+| `0006-web-app-allow-bind-0.0.0.0.patch` | 可选 | 允许 `--host 0.0.0.0`（Docker/无反代场景；上游出于安全故意拒绝） |
+| `0007-web-main-randomuuid-polyfill.patch` | 可选 | 明文 HTTP（非 secure context）下 `crypto.randomUUID` polyfill；HTTPS 不需要 |
+| `0008-frontend-static-mime-png-webp.patch` | 可选 | 静态资源 MIME 补全 `.png`/`.webp` |
 
-> 详情见项目内 `docs/` 或 Harness 排障记录。
+应用步骤（在 dsh 仓库根目录，`<插件路径>` 换成 dsh-openviking 的绝对路径）：
+
+```sh
+# 1. 应用必需补丁（可选补丁按需追加）
+git apply <插件路径>/patches/0001-connection-privileged-methods-trusted-host.patch \
+           <插件路径>/patches/0002-client-modules-path-entry-resolution.patch \
+           <插件路径>/patches/0003-settings-scope-host-mode.patch \
+           <插件路径>/patches/0004-apiproxy-openviking-settings-whitelist.patch
+
+# 2. 重新构建（src 与编译产物 lib 必须同步，运行时加载的是 lib）
+pnpm run build
+
+# 3. 重启 dsh web
+```
+
+> 补丁基于上游 `47f943859b` 导出；dsh 迭代快，若上游漂移导致 `git apply` 冲突，按各补丁内的代码上下文手动适配（改动都很小）。
+
+另外从局域网访问时，dsh web 启动需带 `--trusted-host <LAN-IP>`，否则 `/api` 返回 403 `forbidden`；若经 nginx 反代，可让 `proxy_set_header Host/Origin` 指向 loopback（`127.0.0.1:<port>`）等效放行。
 
 ## 构建（客户端 bundle）
 
