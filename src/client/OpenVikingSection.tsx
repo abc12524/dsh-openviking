@@ -54,7 +54,7 @@ interface Drafts {
 
 /** Render one text field row with label, input, and reset. */
 function Field({
-  id, label, hint, value, onChange, secret, invalid,
+  id, label, hint, value, onChange, secret, invalid, placeholder,
 }: {
   id: string
   label: string
@@ -63,6 +63,7 @@ function Field({
   onChange: (text: string) => void
   secret?: boolean
   invalid?: boolean
+  placeholder?: string
 }) {
   return (
     <label htmlFor={id} style={{ display: 'block', marginBottom: 12 }}>
@@ -71,6 +72,7 @@ function Field({
         id={id}
         type={secret === true ? 'password' : 'text'}
         value={value}
+        placeholder={placeholder}
         onChange={event => onChange(event.target.value)}
         style={{
           width: '100%', boxSizing: 'border-box', padding: '6px 10px', fontSize: 13,
@@ -99,7 +101,8 @@ export function OpenVikingSection({ t, scope }: OpenVikingSectionProps) {
 
   const fieldText = (field: keyof Drafts, draft: Draft | undefined): string => {
     if (draft === undefined) {
-      if (field === 'key') return '' // never echo the secret
+      if (field === 'key') return '****' // mask: the secret is never echoed, but show a saved-value hint
+      if (field === 'user') return '' // shadow: the current user renders as a placeholder instead
       const stored = value?.[field as keyof OpenVikingSectionValue]
       return stored === undefined ? '' : String(stored)
     }
@@ -161,8 +164,8 @@ export function OpenVikingSection({ t, scope }: OpenVikingSectionProps) {
       {!served && <p style={{ color: 'var(--dsw-alias-label-error, #d33)' }}>{t('unavailable')}</p>}
 
       <Field id={`${inputId}-url`} label={t('url')} value={fieldText('url', drafts.url)} onChange={text => edit('url', text)} />
-      <Field id={`${inputId}-user`} label={t('user')} value={fieldText('user', drafts.user)} onChange={text => edit('user', text)} />
-      <Field id={`${inputId}-key`} label={t('key')} secret value={fieldText('key', drafts.key)} onChange={text => edit('key', text)} />
+      <Field id={`${inputId}-user`} label={t('user')} value={fieldText('user', drafts.user)} placeholder={value?.user ?? 'default'} onChange={text => edit('user', text)} />
+      <Field id={`${inputId}-key`} label={t('key')} secret value={fieldText('key', drafts.key)} placeholder="••••••" onChange={text => edit('key', text)} />
       <Field id={`${inputId}-minScore`} label={t('minScore')} hint={t('minScoreHint')} value={fieldText('minScore', drafts.minScore)} onChange={text => edit('minScore', text)} invalid={drafts.minScore?.kind === 'edit' && parseNumber(drafts.minScore.text) === undefined} />
       <Field id={`${inputId}-maxResults`} label={t('maxResults')} hint={t('maxResultsHint')} value={fieldText('maxResults', drafts.maxResults)} onChange={text => edit('maxResults', text)} invalid={drafts.maxResults?.kind === 'edit' && parseNumber(drafts.maxResults.text) === undefined} />
 
