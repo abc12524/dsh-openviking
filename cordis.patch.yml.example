@@ -1,14 +1,15 @@
-# dsh-openviking 插件接线片段
+# dsh-openviking 插件接线片段（clone 快速路径）
 # 复制本文件的 insert 块到 dsh profile 的 patch 层：
 #   /root/.dsh/profiles/web/cordis.patch.yml    （Web profile）
 #   或 ~/.dsh/cordis.patch.yml                  （默认 profile）
 # 不要动 cordis.yml 本体。
 #
-# 快速开始（5 分钟，零补丁零构建，本机 localhost 访问即可用）：
-#   1. git clone https://github.com/abc12524/dsh-openviking /path/to/dsh-openviking
-#   2. 把下面 insert 加入 cordis.patch.yml，name 改为实际路径
-#   3. 重启 dsh —— 记忆检索注入立即可用
-#   之后要 Web 设置页表单 / 局域网访问时，再按 README「安装」章节打补丁。
+# 两种接线模式（二选一，id 相同勿重复）：
+#   A. clone 快速路径（本文件）：name 用绝对路径，config 直接填 url/key，
+#      零补丁零构建，本机 localhost 即可用 —— 见 README「快速开始」
+#   B. 包安装路径：pnpm add github:abc12524/dsh-openviking 后，仓库内
+#      cordis.patch.yml（bundle manifest）由 profile composer 自动接线，
+#      无需手写本片段 —— 见 README「方式 B」
 - insert:
     - id: openviking
       # 路径型 entry：tsx 直接加载 src，host 半段无需构建

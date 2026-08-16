@@ -1,0 +1,12 @@
+# dsh-openviking 插件接线（bundle manifest 模式）
+#
+# 本文件由 package.json 的 `dsh.bundle.patch` 声明，dsh 的 profile composer
+# 会在包被安装（npm / pnpm / git 依赖）后自动读取并接线 —— 装包即用。
+#
+# 依赖前置：包必须出现在 dsh 的 node_modules（pnpm add github:abc12524/dsh-openviking
+# 或 npm 发布后 npm i @deepseek-ai/dsh-openviking），entry 才能按包名解析。
+# 使用场景：需要 Web 设置页表单 / 局域网访问（配合 patches/ 补丁）。
+# 零补丁零配置的快速路径见 README「快速开始」（clone + 路径 entry + config 直填）。
+- insert:
+    - id: openviking
+      name: '@deepseek-ai/dsh-openviking'

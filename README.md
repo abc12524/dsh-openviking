@@ -7,15 +7,27 @@ DeepSeek Harness (dsh) 的 OpenViking 长期记忆集成插件。
 
 检索是**提示而非闸门**（silent-by-design）：任何检索失败只记录警告，对话照常继续，不会阻塞。
 
-## 快速开始（5 分钟，零补丁零构建）
+## 快速开始
 
-只需要记忆检索注入、不关心 Web 设置页表单时（本机 localhost 访问）：
+两种接线模式（二选一，`id: openviking` 相同勿重复）：
+
+**方式 A：clone + 路径 entry（5 分钟，零补丁零构建，本机 localhost）**
 
 1. `git clone https://github.com/abc12524/dsh-openviking`
 2. 把仓库里的 `cordis.patch.yml.example` 的 insert 块复制到 dsh profile 的 patch 层（`~/.dsh/profiles/web/cordis.patch.yml` 或 `~/.dsh/cordis.patch.yml`），`name` 改为实际路径，`config` 直接填 url/key
 3. 重启 dsh —— 检索注入立即可用
 
 原理：host 半段由 tsx 直接加载 `src/`，无需构建；检索是 silent-by-design（url/key 留空也不报错不阻塞）。Web 设置页表单需要 client bundle 与 settings 白名单（补丁 0002/0004），局域网访问还需补丁 0001/0003 —— 需要时再走下方完整安装。
+
+**方式 B：官方插件 CLI（一条命令，推荐）**
+
+```sh
+# 在 dsh 检出目录执行
+dsh plugin --profile web add github:abc12524/dsh-openviking
+# 重启 dsh web
+```
+
+机制：命令在 profile 目录执行 `pnpm add github:...`（prepare 钩子自动构建 lib；需 node 22.18+），随后 reconcile 检测到包的 `dsh.bundle.patch` 声明，自动把插件加入 profile 的 bundles 层栈并读取 `cordis.patch.yml` 接线（entry 为包名 `@deepseek-ai/dsh-openviking`）——**无需手动编辑任何文件**。url/key 通过 Web 设置页配置（设置页需 dsh 侧补丁，见完整安装），或在你自己的 profile patch 层用同名 entry 覆盖 config。
 
 ## 依赖
 
@@ -24,7 +36,7 @@ DeepSeek Harness (dsh) 的 OpenViking 长期记忆集成插件。
 
 ## 安装（完整：设置页 + 远程访问）
 
-插件从 TS 源码加载。把仓库里的 `cordis.patch.yml.example` 的 insert 块复制到 dsh profile 的 patch 层（`cordis.patch.yml`）：
+推荐先用 `dsh plugin --profile web add github:abc12524/dsh-openviking` 装包接线（见快速开始方式 B），再按本节补 dsh 侧补丁。也可以手动接线：插件从 TS 源码加载，把仓库里的 `cordis.patch.yml.example` 的 insert 块复制到 dsh profile 的 patch 层（`cordis.patch.yml`）：
 
 ```yaml
 - insert:
