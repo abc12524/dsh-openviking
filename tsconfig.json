@@ -1,23 +1,23 @@
 {
-  "extends": "../../deepseek-harness/tsconfig.base.json",
   "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "target": "es2022",
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
     "rootDir": "src",
     "outDir": "lib/types",
-    "jsx": "react-jsx",
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    "declaration": true,
     "composite": false,
     "incremental": false,
-    "types": [],
-    "baseUrl": ".",
-    "paths": {
-      "@deepseek-ai/cordis": ["../../deepseek-harness/vendor/cordis/src"],
-      "@deepseek-ai/schemastery": ["../../deepseek-harness/vendor/schemastery/src"],
-      "@deepseek-ai/dsh-agent": ["../../deepseek-harness/packages/core/agent/src/index.ts"],
-      "@deepseek-ai/dsh-llm": ["../../deepseek-harness/packages/llm/llm/src/index.ts"],
-      "@deepseek-ai/dsh-settings": ["../../deepseek-harness/packages/settings/settings/src/index.ts"]
-    }
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   },
-  "include": ["src"],
-  "references": []
+  "include": ["src"]
 }

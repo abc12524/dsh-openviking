@@ -9,7 +9,7 @@ DeepSeek Harness (dsh) 的 OpenViking 长期记忆集成插件。
 
 ## 依赖
 
-- DeepSeek Harness 源码检出，以及本插件 tsconfig 路径别名所依赖的目录结构。`tsconfig.json`（paths 别名）与 `tsdown.client.ts`（alias 配置）默认通过 `../../deepseek-harness` 相对路径引用 Harness；若仓库不在该位置，请把**两处**路径都改为指向你的 dsh 检出的实际路径（相对或绝对均可），否则 `pnpm run build:client` 找不到模块。
+- DeepSeek Harness 源码检出（需含已构建的包；`scripts/link-deps.sh` 会从它链接 `@deepseek-ai/*` 依赖）。
 - 一个 OpenViking 记忆服务（MCP Streamable HTTP 端点，如 `http://<host>:1933/mcp`）。
 
 ## 安装
@@ -60,13 +60,21 @@ pnpm run build
 
 ## 构建（客户端 bundle）
 
-浏览器端是 tsdown 客户端 bundle：
+`tsconfig.json` 已自包含（不 extends dsh 的 tsconfig base、无源码路径别名），构建只需两步：
 
 ```bash
-pnpm run build:client
+# 1. 把 dsh 检出的 @deepseek-ai/* 包符号链接到 node_modules（9 个包，含仅编译期需要的类型包）
+./scripts/link-deps.sh /path/to/deepseek-harness
+
+# 2. 复用 dsh 检出的 tsc/tsdown 构建（tsc 出 lib/types/，tsdown 出 lib/client.js）
+PATH=/path/to/deepseek-harness/node_modules/.bin:$PATH pnpm run build:client
 ```
 
-或使用 Harness 的 client pass（`DSH_BUILD_FACE=client`）。产物输出到 `lib/`（已 gitignore，不入库）。
+产物：`lib/types/`（tsc 类型与发射的 JS）+ `lib/client.js`（浏览器 bundle，banner 以 `__ModuleLoader__.load({id:"@deepseek-ai/dsh-openviking"})` 注册）。`lib/` 已 gitignore，不入库。完整 `pnpm run build`（host lib + client bundle）等价于 dsh 的 Client pass（`DSH_BUILD_FACE=client`）。
+
+## 部署顺序建议
+
+插件检索是 silent-by-design：URL/Key 留空部署时检索自动禁用（不报错、不阻塞对话）。可以先完成上面安装流程，之后再在 Web 设置页填写 OpenViking 服务地址与密钥——设置 live 生效，无需重启。
 
 ## 设置项
 

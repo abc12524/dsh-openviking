@@ -14,7 +14,23 @@ import { basename, dirname, relative, resolve as resolvePath, sep } from 'node:p
 import { fileURLToPath } from 'node:url'
 import type { UserConfig } from 'tsdown'
 import { transform } from 'lightningcss'
-import { PLATFORM_MODULES } from '../../deepseek-harness/packages/client/web/src/platform.ts'
+
+/**
+ * Shared browser platform modules (seeded into dsh's frozen module table).
+ * Inlined from dsh `packages/client/web/src/platform.ts` (baseline
+ * `47f943859b`) so this build carries no source-tree dependency on the harness
+ * checkout. If you bump the dsh baseline, re-check this list against the newer
+ * platform.ts — a drift here surfaces as a bundle that inlines a module the
+ * loader table already answers.
+ */
+const PLATFORM_MODULES = [
+  'react', 'react/jsx-runtime', 'react-dom', 'react-dom/client', '@deepseek-ai/cordis',
+  '@deepseek-ai/dsh-client-ui-slots',
+  '@deepseek-ai/dsh-client-web-react',
+  '@deepseek-ai/dsh-client-ui-primitives',
+  '@deepseek-ai/dsh-client-ui-attachment',
+  '@deepseek-ai/dsh-client-schema-form',
+] as const
 
 /**
  * Virtual-id wrapper keeping module CSS away from tsdown's own css pipeline
