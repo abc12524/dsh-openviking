@@ -7,14 +7,24 @@ DeepSeek Harness (dsh) 的 OpenViking 长期记忆集成插件。
 
 检索是**提示而非闸门**（silent-by-design）：任何检索失败只记录警告，对话照常继续，不会阻塞。
 
+## 快速开始（5 分钟，零补丁零构建）
+
+只需要记忆检索注入、不关心 Web 设置页表单时（本机 localhost 访问）：
+
+1. `git clone https://github.com/abc12524/dsh-openviking`
+2. 把仓库里的 `cordis.patch.yml.example` 的 insert 块复制到 dsh profile 的 patch 层（`~/.dsh/profiles/web/cordis.patch.yml` 或 `~/.dsh/cordis.patch.yml`），`name` 改为实际路径，`config` 直接填 url/key
+3. 重启 dsh —— 检索注入立即可用
+
+原理：host 半段由 tsx 直接加载 `src/`，无需构建；检索是 silent-by-design（url/key 留空也不报错不阻塞）。Web 设置页表单需要 client bundle 与 settings 白名单（补丁 0002/0004），局域网访问还需补丁 0001/0003 —— 需要时再走下方完整安装。
+
 ## 依赖
 
 - DeepSeek Harness 源码检出（需含已构建的包；`scripts/link-deps.sh` 会从它链接 `@deepseek-ai/*` 依赖）。
 - 一个 OpenViking 记忆服务（MCP Streamable HTTP 端点，如 `http://<host>:1933/mcp`）。
 
-## 安装
+## 安装（完整：设置页 + 远程访问）
 
-插件从 TS 源码加载。在 dsh profile 的 patch 层（`cordis.patch.yml`）中插入：
+插件从 TS 源码加载。把仓库里的 `cordis.patch.yml.example` 的 insert 块复制到 dsh profile 的 patch 层（`cordis.patch.yml`）：
 
 ```yaml
 - insert:
@@ -26,7 +36,13 @@ DeepSeek Harness (dsh) 的 OpenViking 长期记忆集成插件。
         minScore: 0.4
 ```
 
-要让 Web 设置页显示表单，还需要在 dsh 侧应用 `patches/` 中的补丁（已在本机验证，基于 dsh 上游 `47f943859b` 导出）：
+要让 Web 设置页显示表单，还需要在 dsh 侧应用 `patches/` 中的补丁（已在本机验证，基于 dsh 上游 `47f943859b` 导出）。一条命令应用必需补丁：
+
+```sh
+/path/to/dsh-openviking/scripts/apply-patches.sh /path/to/deepseek-harness
+```
+
+（可选补丁加 `--all`；也可手动 `git apply`，清单如下。）
 
 | 补丁 | 必需 | 作用 |
 |---|---|---|
@@ -39,19 +55,11 @@ DeepSeek Harness (dsh) 的 OpenViking 长期记忆集成插件。
 | `0007-web-main-randomuuid-polyfill.patch` | 可选 | 明文 HTTP（非 secure context）下 `crypto.randomUUID` polyfill；HTTPS 不需要 |
 | `0008-frontend-static-mime-png-webp.patch` | 可选 | 静态资源 MIME 补全 `.png`/`.webp` |
 
-应用步骤（在 dsh 仓库根目录，`<插件路径>` 换成 dsh-openviking 的绝对路径）：
+> `apply-patches.sh` 已覆盖上表必需补丁（幂等：重复执行自动跳过）。应用后**必须重新构建**（src 与编译产物 lib 需同步，运行时加载的是 lib）并重启：
 
 ```sh
-# 1. 应用必需补丁（可选补丁按需追加）
-git apply <插件路径>/patches/0001-connection-privileged-methods-trusted-host.patch \
-           <插件路径>/patches/0002-client-modules-path-entry-resolution.patch \
-           <插件路径>/patches/0003-settings-scope-host-mode.patch \
-           <插件路径>/patches/0004-apiproxy-openviking-settings-whitelist.patch
-
-# 2. 重新构建（src 与编译产物 lib 必须同步，运行时加载的是 lib）
-pnpm run build
-
-# 3. 重启 dsh web
+# 在 dsh 检出根目录
+pnpm run build && systemctl restart dsh-web   # 或重启你的 dsh 进程
 ```
 
 > 补丁基于上游 `47f943859b` 导出；dsh 迭代快，若上游漂移导致 `git apply` 冲突，按各补丁内的代码上下文手动适配（改动都很小）。
