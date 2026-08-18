@@ -23,6 +23,7 @@ declare -A PKG_PATHS=(
   [@deepseek-ai/dsh-client-ui-slots]="packages/client/ui-slots"
   [@deepseek-ai/dsh-client-runtime]="packages/client/runtime"
   [@deepseek-ai/dsh-client-ui-settings]="packages/client/ui-settings"
+  [@deepseek-ai/dsh-client-ui-settings-plugins]="packages/client/ui-settings-plugins"
   [@deepseek-ai/dsh-client-locale]="packages/client/locale"
 )
 

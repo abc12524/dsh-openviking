@@ -1,6 +1,6 @@
 {
   "name": "@deepseek-ai/dsh-openviking",
-  "description": "OpenViking memory integration: Web Settings section + automatic memory-context injection",
+  "description": "OpenViking memory integration: Web Settings plugin card + automatic memory-context injection",
   "version": "0.1.0",
   "keywords": [
     "dsh",
@@ -45,6 +45,7 @@
         "@deepseek-ai/dsh-client-locale",
         "@deepseek-ai/dsh-client-runtime",
         "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-settings-plugins",
         "@deepseek-ai/dsh-client-ui-slots",
         "@deepseek-ai/dsh-api-remotes"
       ],

@@ -14,16 +14,24 @@ PATCHES="$SCRIPT_DIR/../patches"
 [ -d "$DSH/packages" ] || { echo "错误: $DSH 不是 dsh 检出（无 packages/）" >&2; exit 1; }
 cd "$DSH"
 
-# 幂等：已应用过（api-proxy.ts 含 openviking）则跳过
-if grep -q "'openviking'" packages/host/apiproxy/src/api-proxy.ts 2>/dev/null; then
-  echo "检测到补丁已应用（api-proxy.ts 已含 openviking），跳过。"
+# 幂等：0001 已应用过（connection 特权方法走 trusted-host）则全部跳过
+if grep -q "isTrustedApiRequest(request, trustedHosts)" packages/client/connection/src/index.ts 2>/dev/null; then
+  echo "检测到必需补丁已应用（0001 标记），跳过。"
   exit 0
 fi
 
-for p in "$PATCHES"/000{1,2,3,4}-*.patch; do
+for p in "$PATCHES"/000{1,2,3}-*.patch; do
   echo "== 应用 $(basename "$p") =="
   git apply "$p"
 done
+
+# 0004 只对旧版 dsh（< rc.7）需要：rc.7+ (#2404) 上游已移除 settings 白名单
+if grep -q "WEB_SETTINGS_NAMESPACES" packages/host/apiproxy/src/api-proxy.ts 2>/dev/null; then
+  echo "== 应用 0004-apiproxy-openviking-settings-whitelist.patch（旧版 dsh 需要）=="
+  git apply "$PATCHES"/0004-*.patch
+else
+  echo "== 跳过 0004（rc.7+ 已移除 settings 白名单，无需应用）=="
+fi
 
 if [ "$ALL" = "--all" ]; then
   for p in "$PATCHES"/000{5,6,7,8}-*.patch; do
