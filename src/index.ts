@@ -256,9 +256,11 @@ export function apply(ctx: Context, entry: OpenVikingConfig): void {
       ctx.logger.warn(`openviking: settings namespace register failed: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
-  // Register the `openviking_*` tool series (REST-backed, no MCP) and keep its
-  // model-facing visibility in sync with the live config.
-  const syncOvTools = registerOvTools(ctx, current)
+  // Register the `openviking_*` tool series (REST-backed, no MCP). Pass a live
+  // getter (`() => current()`, not `current`) so the client and the disclosure
+  // guard read the resolved settings even after `tryRegister` reassigns
+  // `current` to the settings scope.
+  const syncOvTools = registerOvTools(ctx, () => current())
 
   // Try once immediately (settings may already exist), then on every service
   // registration event until success.

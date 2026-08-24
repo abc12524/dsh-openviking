@@ -209,10 +209,19 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
   // Register all nine tools up front. Harness agents snapshot the tool list at
   // construction, so a late register/unregister would rarely (if ever) surface;
   // registering unconditionally guarantees the tools appear in the tool list.
-  // Unconfigured calls still fail gracefully via the `safe` wrapper inside each
-  // tool's `execute`, which reports a clear "OpenViking 未配置" error instead of
-  // masking the tool entirely.
   for (const spec of toolSpecs) ctx.tools.register(spec)
+
+  // Soft disclosure: the tools are always listed, but a global guard denies any
+  // `openviking_*` call while the server is unconfigured, returning a clear
+  // reason to the model instead of a raw error. The guard reads the live config
+  // via `getConfig`, so enabling the tools is instant once url/key are set.
+  ctx.tools.guard((execution) => {
+    if (typeof execution.name !== 'string') return undefined
+    if (!(OV_TOOL_NAMES as readonly string[]).includes(execution.name)) return undefined
+    const c = getConfig()
+    if (c.url.trim() !== '' && c.key.trim() !== '') return undefined
+    return 'OpenViking 未配置：请先在「设置 → 插件 → OpenViking」中填写服务地址(url)与密钥(key)后再调用。'
+  })
 
   // No-op kept for call-site compatibility (the caller wires it as a config
   // change callback); disclosure is no longer toggled at runtime.
