@@ -53,7 +53,9 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
     return { url: c.url, user: c.user, key: c.key, timeoutMs: c.timeoutMs }
   })
 
-  ctx.tools.register(defineTool({
+  const toolSpecs: ReturnType<typeof defineTool>[] = []
+
+  toolSpecs.push(defineTool({
     name: 'openviking_search',
     description: '在 OpenViking 外置记忆中语义搜索，查找之前保存的知识、偏好、项目信息等',
     parameters: {
@@ -70,7 +72,7 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
     },
   }))
 
-  ctx.tools.register(defineTool({
+  toolSpecs.push(defineTool({
     name: 'openviking_remember',
     description: '将重要信息保存到 OpenViking 外置记忆中，以便后续对话回忆。适合保存：用户偏好、项目配置、关键决策、有用的操作经验',
     parameters: {
@@ -93,7 +95,7 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
     },
   }))
 
-  ctx.tools.register(defineTool({
+  toolSpecs.push(defineTool({
     name: 'openviking_read',
     description: '通过 URI 读取 OpenViking 记忆中的单个文件内容。URI 格式: viking://user/{user}/...',
     parameters: {
@@ -105,7 +107,7 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
     },
   }))
 
-  ctx.tools.register(defineTool({
+  toolSpecs.push(defineTool({
     name: 'openviking_list_dir',
     description: '列出 OpenViking 指定目录下的所有文件和子目录，用于探索记忆结构或查找特定文件',
     parameters: {
@@ -119,7 +121,7 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
     },
   }))
 
-  ctx.tools.register(defineTool({
+  toolSpecs.push(defineTool({
     name: 'openviking_write_file',
     description: '写入内容到 OpenViking 记忆文件。支持三种模式：create=创建新文件, replace=覆盖已有文件, append=追加内容',
     parameters: {
@@ -142,7 +144,7 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
     },
   }))
 
-  ctx.tools.register(defineTool({
+  toolSpecs.push(defineTool({
     name: 'openviking_create_session',
     description: '在 OpenViking 中创建一个新的对话 Session，用于保存一段完整的对话历史',
     parameters: {
@@ -155,7 +157,7 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
     },
   }))
 
-  ctx.tools.register(defineTool({
+  toolSpecs.push(defineTool({
     name: 'openviking_add_message',
     description: '向 OpenViking Session 中添加一条消息（user 或 assistant）',
     parameters: {
@@ -173,7 +175,7 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
     },
   }))
 
-  ctx.tools.register(defineTool({
+  toolSpecs.push(defineTool({
     name: 'openviking_commit_session',
     description: '提交/归档 OpenViking Session，触发从会话内容中提取结构化长期记忆。commit 之后不要再次 add_message',
     parameters: {
@@ -187,7 +189,7 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
     },
   }))
 
-  ctx.tools.register(defineTool({
+  toolSpecs.push(defineTool({
     name: 'openviking_delete_file',
     description: '通过 URI 删除 OpenViking 记忆中的文件。注意：此操作不可撤销！',
     parameters: {
@@ -199,19 +201,21 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
     },
   }))
 
-  // Progressive disclosure: hide the tools from the model until the memory
-  // server is configured, so an unconfigured deployment does not advertise
-  // `openviking_*` in its tool prompt. `restrict` keeps presentation, lookup
-  // and dispatch aligned; dispose it to reveal the tools again.
-  let restriction: (() => void) | undefined
+  // Progressive disclosure: register the `openviking_*` tools only while the
+  // memory server is configured, so an unconfigured deployment never advertises
+  // them in the model's tool prompt. Registration is toggled on every config
+  // change (the host subscribes to the settings scope). `ctx.tools.restrict`
+  // is intentionally avoided: it requires a scoped (agent) context and would
+  // mask every agent if called from the plugin-global context.
+  let disposers: Array<() => void> = []
   const syncVisibility = (): void => {
     const c = getConfig()
     const enabled = c.url.trim() !== '' && c.key.trim() !== ''
-    if (enabled && restriction !== undefined) {
-      restriction()
-      restriction = undefined
-    } else if (!enabled && restriction === undefined) {
-      restriction = ctx.tools.restrict({ deny: [...OV_TOOL_NAMES] })
+    if (enabled && disposers.length === 0) {
+      for (const spec of toolSpecs) disposers.push(ctx.tools.register(spec))
+    } else if (!enabled && disposers.length > 0) {
+      for (const dispose of disposers) dispose()
+      disposers = []
     }
   }
   syncVisibility()
