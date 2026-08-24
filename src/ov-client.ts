@@ -43,6 +43,12 @@ export function decodeUserFromKey(key: string): string {
   }
 }
 
+/** Whether an error denotes a missing target file (so `create` should be tried). */
+function isNotFoundError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return /404|not found|file not found/i.test(message)
+}
+
 /** One REST round-trip; throws on non-2xx with a short error excerpt. */
 async function request(
   base: string,
@@ -94,12 +100,22 @@ export class OpenVikingRestClient {
     }, timeoutMs, signal)
   }
 
-  /** Save a long-term memory as a Markdown file under the user namespace. */
+  /**
+   * Save a long-term memory as a Markdown file under the user namespace. The
+   * content endpoint's `replace` mode requires the file to already exist, so a
+   * first-time `remember` (target file absent) 404s; on that "not found" we
+   * retry with `create` so a new memory is written instead of failing.
+   */
   async remember(category: string, name: string, content: string, signal?: AbortSignal): Promise<string> {
     const { key } = this.getConfig()
     const user = decodeUserFromKey(key)
     const uri = `viking://user/${user}/memories/${category}/${name}.md`
-    return this.writeFile(uri, content, 'replace', signal)
+    try {
+      return await this.writeFile(uri, content, 'replace', signal)
+    } catch (error) {
+      if (isNotFoundError(error)) return await this.writeFile(uri, content, 'create', signal)
+      throw error
+    }
   }
 
   /** Read one `viking://` file. */
