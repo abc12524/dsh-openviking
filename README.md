@@ -46,7 +46,7 @@ pnpm run build:client # 同上但显式标注 client face（等价于 dsh Client
 | 工具 | 说明 | 关键参数 |
 |------|------|----------|
 | `openviking_search` | 语义搜索外置记忆 | `query`, `limit?`, `min_score?` |
-| `openviking_remember` | 保存长期记忆（写入 `viking://user/<user>/<category>/<name>.md`） | `category`, `name`, `content` |
+| `openviking_remember` | 保存长期记忆（写入 `viking://user/<user>/memories/<category>/<name>.md`） | `category`, `name`, `content` |
 | `openviking_read` | 读取单个 `viking://` 文件 | `uri` |
 | `openviking_list_dir` | 列出目录（可递归） | `uri`, `recursive?` |
 | `openviking_write_file` | 写入 `viking://` 文件 | `uri`, `content`, `mode`(create/replace/append) |

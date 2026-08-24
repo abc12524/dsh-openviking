@@ -82,7 +82,7 @@ export class OpenVikingRestClient {
   /** Save a long-term memory as a Markdown file under the user namespace. */
   async remember(category: string, name: string, content: string, signal?: AbortSignal): Promise<string> {
     const { user } = this.getConfig()
-    const uri = `viking://user/${user}/${category}/${name}.md`
+    const uri = `viking://user/${user}/memories/${category}/${name}.md`
     return this.writeFile(uri, content, 'replace', signal)
   }
 
