@@ -1,7 +1,7 @@
 {
   "name": "@abc12524/dsh-openviking",
   "description": "OpenViking memory integration: Web Settings plugin card + automatic memory-context injection",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "keywords": [
     "dsh",
     "dsh-plugin",
