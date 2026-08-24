@@ -16,7 +16,7 @@
       name: '/path/to/dsh-openviking/src/index.ts'
       config:
         # 直接写配置 = 不打开设置页也能用（推荐）
-        url: http://<openviking-host>:1933/mcp
+        url: http://<openviking-host>:1933
         key: '<bearer-token>'
         minScore: 0.4
         # maxResults: 3

@@ -45,7 +45,7 @@ dsh plugin --profile web add github:abc12524/dsh-openviking
     - id: openviking
       name: '/path/to/dsh-openviking/src/index.ts'
       config:
-        url: http://<openviking-host>:1933/mcp
+        url: http://<openviking-host>:1933
         key: '<bearer-token>'
         minScore: 0.4
 ```
@@ -93,6 +93,26 @@ PATH=/path/to/deepseek-harness/node_modules/.bin:$PATH pnpm run build:client
 
 产物：`lib/types/`（tsc 类型与发射的 JS）+ `lib/client.js`（浏览器 bundle，banner 以 `__ModuleLoader__.load({id:"@abc12524/dsh-openviking"})` 注册）。`lib/` 已 gitignore，不入库。完整 `pnpm run build`（host lib + client bundle）等价于 dsh 的 Client pass（`DSH_BUILD_FACE=client`）。
 
+## ov 工具系列（REST，非 MCP）
+
+插件在 harness 中注册一组 `openviking_*` 工具，与自动记忆注入共用同一套 REST 客户端，直接调用 OpenViking REST API（v1），不经由 ov 的 MCP 端点。服务端根地址即设置项中的 `url`（自动兼容残留的 `/mcp` 后缀），鉴权复用同一 bearer token。
+
+**渐进披露**：`url`/`key` 未配置时，这组工具会通过 `ctx.tools.restrict({ deny })` 从模型的工具提示中隐藏（注册仍在，只是不可见、不可调用）；在设置页填好地址与密钥后会即时显示，无需重启。
+
+| 工具 | 说明 | 关键参数 |
+|------|------|----------|
+| `openviking_search` | 语义搜索外置记忆 | `query`, `limit?`, `min_score?` |
+| `openviking_remember` | 保存长期记忆（写入 `viking://user/<user>/<category>/<name>.md`） | `category`, `name`, `content` |
+| `openviking_read` | 读取单个 `viking://` 文件 | `uri` |
+| `openviking_list_dir` | 列出目录（可递归） | `uri`, `recursive?` |
+| `openviking_write_file` | 写入 `viking://` 文件 | `uri`, `content`, `mode`(create/replace/append) |
+| `openviking_create_session` | 创建对话 Session | `session_id?` |
+| `openviking_add_message` | 向 Session 追加消息 | `session_id`, `role`, `content` |
+| `openviking_commit_session` | 归档 Session 并提取长期记忆 | `session_id`, `keep_recent_count?` |
+| `openviking_delete_file` | 删除 `viking://` 文件（不可撤销） | `uri` |
+
+实现见 `src/ov-client.ts`（REST 客户端）与 `src/ov-tools.ts`（工具定义）。端点路径遵循 OpenViking REST API（`POST /api/v1/search/find`、`/api/v1/fs/read|ls|write|rm`、`/api/v1/sessions`、`/api/v1/sessions/{id}/messages`、`/api/v1/sessions/{id}/commit`）；`remember` 映射到在用户命名空间下写入 `.md` 文件。
+
 ## 部署顺序建议
 
 插件检索是 silent-by-design：URL/Key 留空部署时检索自动禁用（不报错、不阻塞对话）。可以先完成上面安装流程，之后再在 Web 设置页填写 OpenViking 服务地址与密钥——设置 live 生效，无需重启。
@@ -105,12 +125,12 @@ PATH=/path/to/deepseek-harness/node_modules/.bin:$PATH pnpm run build:client
 
 | 字段 | 说明 |
 |------|------|
-| Server URL | OpenViking MCP Streamable HTTP 端点 |
+| Server URL | OpenViking REST 服务端根地址（如 `http://<host>:1933`，不带 `/mcp`） |
 | User | OpenViking 用户标识（可选，默认 `default`） |
 | API Key | 完整 Bearer token（敏感字段，保存后不回显，以 `****` 掩码显示） |
 | Relevance threshold | 只注入相关性**高于**此值的候选（0-1），默认 0.4 |
 | Result count | 每次提问最多注入的候选记忆条数，默认 3 |
-| MCP timeout (ms) | 单次 MCP 往返超时（毫秒），默认 8000 |
+| MCP timeout (ms) | 单次 REST 请求超时（毫秒），默认 8000 |
 | Max abstract chars | 每条候选摘要截断长度（字符），默认 400 |
 
 ## 许可证

@@ -22,7 +22,7 @@ export const OPENVIKING_NS = 'openviking'
 
 /** The openviking settings namespace fields this card edits. */
 export interface OpenVikingSectionValue {
-  /** MCP Streamable HTTP endpoint of the memory server. */
+  /** OpenViking REST server root of the memory server. */
   url?: string
   /** OpenViking user identity (informational; auth uses `key`). */
   user?: string
