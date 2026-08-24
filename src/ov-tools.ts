@@ -39,14 +39,18 @@ export const OV_TOOL_NAMES = [
 ] as const
 
 /**
- * Register the nine `openviking_*` tools into the harness tool registry, and
- * return a `syncVisibility` callback that registers them only while the memory
- * server is configured (unconfigured => not registered at all, so they never
- * appear in the model-facing tool list). Call it on every config change to keep
- * disclosure live.
+ * Register the nine `openviking_*` tools into the harness tool registry.
+ *
+ * The tools are registered up front, unconditionally. DeepSeek Harness resolves
+ * each agent's tool list from the global registry at agent construction, so a
+ * late register/unregister (the earlier "progressive disclosure" attempt) is
+ * unreliable — tools registered after a session starts never surface in the
+ * model's tool list. Registering always keeps them discoverable; an
+ * unconfigured deployment reports a clear error from `execute` (via the `safe`
+ * wrapper) instead of silently hiding the tool.
  * @param ctx - plugin context; the registrations are disposed with it.
  * @param getConfig - live config getter (url/key/user/timeoutMs).
- * @returns `syncVisibility`, to invoke when the resolved config changes.
+ * @returns a no-op sync function, kept for call-site compatibility.
  */
 export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig): () => void {
   const client = new OpenVikingRestClient((): OvConfig => {
@@ -202,23 +206,18 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
     },
   }))
 
-  // Progressive disclosure: register the `openviking_*` tools only while the
-  // memory server is configured, so an unconfigured deployment never advertises
-  // them in the model's tool prompt. Registration is toggled on every config
-  // change (the host subscribes to the settings scope). Dynamic
-  // register/unregister is used instead of `ctx.tools.restrict`, which requires
-  // a scoped (agent) context and would mask every agent from the plugin-global
-  // context.
-  let disposers: Array<() => void> = []
-  const syncVisibility = (): void => {
-    const c = getConfig()
-    const enabled = c.url.trim() !== '' && c.key.trim() !== ''
-    if (enabled && disposers.length === 0) {
-      for (const spec of toolSpecs) disposers.push(ctx.tools.register(spec))
-    } else if (!enabled && disposers.length > 0) {
-      for (const dispose of disposers) dispose()
-      disposers = []
-    }
+  // Register all nine tools up front. Harness agents snapshot the tool list at
+  // construction, so a late register/unregister would rarely (if ever) surface;
+  // registering unconditionally guarantees the tools appear in the tool list.
+  // Unconfigured calls still fail gracefully via the `safe` wrapper inside each
+  // tool's `execute`, which reports a clear "OpenViking 未配置" error instead of
+  // masking the tool entirely.
+  for (const spec of toolSpecs) ctx.tools.register(spec)
+
+  // No-op kept for call-site compatibility (the caller wires it as a config
+  // change callback); disclosure is no longer toggled at runtime.
+  return (): void => {}
+}
   }
   syncVisibility()
   return syncVisibility
