@@ -60,8 +60,7 @@
   "files": [
     "cordis.patch.yml",
     "lib/index.js",
-    "lib/client.js",
-    "patches"
+    "lib/client.js"
   ],
   "license": "MIT",
   "peerDependencies": {
