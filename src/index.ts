@@ -119,14 +119,29 @@ function toCandidate(hit: RestHit): CandidateMemory | undefined {
 
 /**
  * Parse the `find` REST response into candidate memories. Scores are already
- * 0..1 fractions; the `memories`/`resources`/`skills` buckets are flattened.
+ * 0..1 fractions. Server responses nest the buckets either at the top level
+ * (`memories`/`resources`/`skills`) or under a `result` object
+ * (`result.memories`, as the OpenViking Kotlin client reads them); both shapes
+ * are flattened.
  * @param json - the parsed `find` response.
  * @returns parsed candidates in server order.
  */
 export function parseCandidates(json: unknown): CandidateMemory[] {
-  const obj = json as { memories?: RestHit[]; resources?: RestHit[]; skills?: RestHit[] } | undefined
+  const obj = json as {
+    memories?: RestHit[]
+    resources?: RestHit[]
+    skills?: RestHit[]
+    result?: { memories?: RestHit[]; resources?: RestHit[]; skills?: RestHit[] }
+  } | undefined
   if (obj === undefined || obj === null) return []
-  const buckets = [obj.memories, obj.resources, obj.skills]
+  const buckets = [
+    obj.memories,
+    obj.resources,
+    obj.skills,
+    obj.result?.memories,
+    obj.result?.resources,
+    obj.result?.skills,
+  ]
   const candidates: CandidateMemory[] = []
   for (const bucket of buckets) {
     if (!Array.isArray(bucket)) continue
@@ -264,14 +279,19 @@ export function apply(ctx: Context, entry: OpenVikingConfig): void {
   ctx.on('internal/service', () => { tryRegister() }, { global: true })
 
   ctx.on('agent/pre-step', async (
-    { step, signal },
+    { signal },
     next,
   ): Promise<PreStepDecision> => {
     const decision = await next()
     if (decision.kind === 'reject' || signal.aborted) return decision
-    // Retrieve only for the step that carries a fresh user question; tool
-    // loops and follow-up steps must not re-query (or re-inject) memory.
-    if (step !== 1) return decision
+    // Inject only when the proposed step's latest message is a fresh user
+    // question. Tool-loop and assistant steps end with non-user messages, so
+    // this keeps retrieval to actual user turns (every question gets relevant
+    // memories) without re-querying on internal steps. The `agent/pre-step`
+    // payload has no `step` counter, so freshness is detected from the message
+    // tail instead of a step number.
+    const last = decision.messages[decision.messages.length - 1]
+    if (last === undefined || last.source.kind !== 'user') return decision
 
     const config = current()
     if (config.url === '' || config.key === '') return decision
