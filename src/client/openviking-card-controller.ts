@@ -25,9 +25,7 @@ export const OPENVIKING_NS = 'openviking'
 export interface OpenVikingSectionValue {
   /** OpenViking REST server root of the memory server. */
   url?: string
-  /** OpenViking user identity (informational; auth uses `key`). */
-  user?: string
-  /** Full bearer token (never echoed back after save). */
+  /** Full bearer token (never echoed back after save). The user identity is decoded from it. */
   key?: string
   /** Strictly-greater relevance threshold (0..1). */
   minScore?: number
@@ -68,12 +66,6 @@ export interface OpenVikingCardState {
   failed: boolean
   /** Per-field control state. */
   fields: Record<OpenVikingField, OpenVikingFieldState>
-  /**
-   * The resolved user identity, rendered as a placeholder while the field is
-   * unedited — the card never shows it as a value, so a save cannot surprise
-   * the composition layer with an identity nobody chose.
-   */
-  userPlaceholder: string
 }
 
 /** The registration-side face the card's slot entry injects. */
@@ -140,12 +132,10 @@ export class OpenVikingCardController {
       failed: this.failed,
       fields: {
         url: this.field('url'),
-        user: this.field('user'),
         key: this.field('key'),
         minScore: this.field('minScore'),
         maxResults: this.field('maxResults'),
       },
-      userPlaceholder: this.snapshot().value?.user ?? 'default',
     }
   }
 
@@ -160,9 +150,8 @@ export class OpenVikingCardController {
         invalid: NUMERIC_FIELDS.has(field) && !isFiniteNumber(staged.text),
       }
     }
-    // The secret never rides a response and the current user renders as a
-    // placeholder instead of a value, so both start blank.
-    if (field === 'key' || field === 'user') {
+    // The secret never rides a response, so it starts blank.
+    if (field === 'key') {
       return { text: '', overridden: this.overridden(field), invalid: false }
     }
     const value = this.value(field)

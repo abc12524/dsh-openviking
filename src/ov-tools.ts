@@ -55,7 +55,7 @@ export const OV_TOOL_NAMES = [
 export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig): () => void {
   const client = new OpenVikingRestClient((): OvConfig => {
     const c = getConfig()
-    return { url: c.url, user: c.user, key: c.key, timeoutMs: c.timeoutMs }
+    return { url: c.url, key: c.key, timeoutMs: c.timeoutMs }
   })
 
   const toolSpecs: ReturnType<typeof defineTool>[] = []

@@ -70,8 +70,7 @@ pnpm run build:client # 同上但显式标注 client face（等价于 dsh Client
 | 字段 | 说明 |
 |------|------|
 | Server URL | OpenViking REST 服务端根地址（如 `http://<host>:1933`，不带 `/mcp`） |
-| User | OpenViking 用户标识（可选，默认 `default`） |
-| API Key | 完整 Bearer token（敏感字段，保存后不回显，以 `****` 掩码显示） |
+| API Key | 完整 Bearer token（敏感字段，保存后不回显，以 `****` 掩码显示）。用户标识从 token 第二段（base64url）自动解码，无需单独填写 |
 | Relevance threshold | 只注入相关性**高于**此值的候选（0-1），默认 0.4 |
 | Result count | 每次提问最多注入的候选记忆条数，默认 3 |
 

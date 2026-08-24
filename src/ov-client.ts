@@ -12,8 +12,6 @@
 export interface OvConfig {
   /** OpenViking REST server root; a residual `/mcp` suffix is stripped. */
   url: string
-  /** OpenViking user identity; selects the `viking://user/<user>` namespace. */
-  user: string
   /** Full bearer token (without the "Bearer " prefix). */
   key: string
   /** Per-request timeout in milliseconds. */
@@ -26,6 +24,23 @@ function resolveRestBase(url: string): string {
   if (base.endsWith('/mcp')) base = base.slice(0, -4)
   if (base.endsWith('/')) base = base.slice(0, -1)
   return base
+}
+
+/**
+ * Decode the OpenViking user identity from the bearer token. The token is three
+ * dot-separated base64url segments; the second segment is the user identity
+ * (e.g. `default.shell-tool.<hash>` decodes to `shell-tool`). Falls back to
+ * `default` when the token shape is unexpected.
+ */
+export function decodeUserFromKey(key: string): string {
+  const segment = key.split('.')[1]
+  if (segment === undefined || segment.length === 0) return 'default'
+  try {
+    const decoded = Buffer.from(segment, 'base64url').toString('utf8').trim()
+    return decoded.length > 0 ? decoded : 'default'
+  } catch {
+    return 'default'
+  }
 }
 
 /** One REST round-trip; throws on non-2xx with a short error excerpt. */
@@ -81,7 +96,8 @@ export class OpenVikingRestClient {
 
   /** Save a long-term memory as a Markdown file under the user namespace. */
   async remember(category: string, name: string, content: string, signal?: AbortSignal): Promise<string> {
-    const { user } = this.getConfig()
+    const { key } = this.getConfig()
+    const user = decodeUserFromKey(key)
     const uri = `viking://user/${user}/memories/${category}/${name}.md`
     return this.writeFile(uri, content, 'replace', signal)
   }

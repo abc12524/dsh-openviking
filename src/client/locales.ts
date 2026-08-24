@@ -4,7 +4,7 @@
 export type OpenVikingKey =
   | 'title' | 'intro'
   | 'unsaved' | 'readOnly'
-  | 'url' | 'user' | 'key'
+  | 'url' | 'key'
   | 'minScore' | 'minScoreHint'
   | 'maxResults' | 'maxResultsHint'
   | 'overridden' | 'reset' | 'invalidNumber'
@@ -18,7 +18,6 @@ export const zh: Record<OpenVikingKey, string> = {
   unsaved: '未保存',
   readOnly: '本部署的设置为只读。',
   url: '服务器地址',
-  user: '用户 (可选)',
   key: 'API Key',
   minScore: '相关性阈值',
   minScoreHint: '仅注入相关度大于该值(0-1)的候选记忆，默认 0.4。',
@@ -42,7 +41,6 @@ export const en: Record<OpenVikingKey, string> = {
   unsaved: 'Unsaved',
   readOnly: 'This deployment stores settings read-only.',
   url: 'Server URL',
-  user: 'User (optional)',
   key: 'API Key',
   minScore: 'Relevance threshold',
   minScoreHint: 'Only inject candidates with relevance above this value (0-1); default 0.4.',

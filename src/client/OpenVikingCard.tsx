@@ -10,9 +10,10 @@
  * renders nothing while the namespace is unavailable, so a deployment that
  * does not serve it shows no trace of the card.
  *
- * Fields: server URL, user, key (secret), relevance threshold (minScore), and
- * result count (maxResults). The threshold/count drive the automatic
- * memory-context injection; edits land live via the settings namespace.
+ * Fields: server URL, key (secret), relevance threshold (minScore), and result
+ * count (maxResults). The threshold/count drive the automatic memory-context
+ * injection; edits land live via the settings namespace. The user identity is
+ * decoded from the key, so it is no longer a separate field.
  */
 
 import { useState } from 'react'
@@ -147,12 +148,6 @@ export function OpenVikingCard({ t, ...props }: OpenVikingCardProps) {
               id="openviking-url" label={t('url')} state={field('url')} disabled={disabled}
               overriddenLabel={t('overridden')} resetLabel={t('reset')} invalidLabel={t('invalidNumber')}
               onEdit={text => props.edit('url', text)} onReset={() => props.resetField('url')}
-            />
-            <Field
-              id="openviking-user" label={t('user')} state={field('user')} disabled={disabled}
-              placeholder={state.userPlaceholder}
-              overriddenLabel={t('overridden')} resetLabel={t('reset')} invalidLabel={t('invalidNumber')}
-              onEdit={text => props.edit('user', text)} onReset={() => props.resetField('user')}
             />
             <Field
               id="openviking-key" label={t('key')} state={field('key')} secret disabled={disabled} placeholder="••••••"
