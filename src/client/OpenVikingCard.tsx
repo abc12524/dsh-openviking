@@ -16,6 +16,7 @@
  */
 
 import { useState } from 'react'
+import { IconChevronDownOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 // Type-only: the keyed slot's declaration lives with its declarer. A value
 // import would fail the client bundle-purity gate.
@@ -131,11 +132,11 @@ export function OpenVikingCard({ t, ...props }: OpenVikingCardProps) {
         </span>
         {state.dirty ? <span style={{ fontSize: 11, color: TOKEN.brand }}>{t('unsaved')}</span> : null}
         <span style={{
-          fontSize: 12, color: TOKEN.labelTertiary, transition: 'transform 120ms ease',
+          display: 'inline-flex', color: TOKEN.labelTertiary, transition: 'transform 120ms ease',
           transform: open ? 'rotate(180deg)' : 'none',
         }}
         >
-          ▾
+          <IconChevronDownOutline14 />
         </span>
       </button>
       {open
