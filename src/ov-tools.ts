@@ -58,8 +58,8 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
     description: '在 OpenViking 外置记忆中语义搜索，查找之前保存的知识、偏好、项目信息等',
     parameters: {
       query: { type: 'string', required: true, description: '搜索关键词，描述要查找什么内容' },
-      limit: { type: 'number', required: false, description: '返回候选条数上限（默认 3，模型可覆盖）' },
-      min_score: { type: 'number', required: false, description: '最低相关性分数阈值（0-1，默认 0.4，模型可覆盖）' },
+      limit: { type: 'number', description: '返回候选条数上限（默认 3，模型可覆盖）' },
+      min_score: { type: 'number', description: '最低相关性分数阈值（0-1，默认 0.4，模型可覆盖）' },
     },
     output: textOutput,
     async execute(args) {
@@ -110,7 +110,7 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
     description: '列出 OpenViking 指定目录下的所有文件和子目录，用于探索记忆结构或查找特定文件',
     parameters: {
       uri: { type: 'string', required: true, description: '目录 URI' },
-      recursive: { type: 'boolean', required: false, description: '是否递归列出子目录（默认 false）' },
+      recursive: { type: 'boolean', description: '是否递归列出子目录（默认 false）' },
     },
     output: textOutput,
     async execute(args) {
@@ -146,7 +146,7 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
     name: 'openviking_create_session',
     description: '在 OpenViking 中创建一个新的对话 Session，用于保存一段完整的对话历史',
     parameters: {
-      session_id: { type: 'string', required: false, description: '可选。自定义 session_id (UUID 格式)。不传则自动生成' },
+      session_id: { type: 'string', description: '可选。自定义 session_id (UUID 格式)。不传则自动生成' },
     },
     output: textOutput,
     async execute(args) {
@@ -178,7 +178,7 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
     description: '提交/归档 OpenViking Session，触发从会话内容中提取结构化长期记忆。commit 之后不要再次 add_message',
     parameters: {
       session_id: { type: 'string', required: true, description: 'Session ID' },
-      keep_recent_count: { type: 'number', required: false, description: '保留最近 N 条消息在活跃 session 中。0=归档所有消息（默认）' },
+      keep_recent_count: { type: 'number', description: '保留最近 N 条消息在活跃 session 中。0=归档所有消息（默认）' },
     },
     output: textOutput,
     async execute(args) {
