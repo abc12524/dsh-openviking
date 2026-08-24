@@ -27,9 +27,9 @@ dsh plugin --profile web add github:abc12524/dsh-openviking
 # 重启 dsh web
 ```
 
-机制：命令在 profile 目录执行 `pnpm add github:...`（prepare 钩子自动构建 lib；需 node 22.18+，且本机已检出 DeepSeek Harness 并用 `./scripts/link-deps.sh` 建立 `@deepseek-ai/*` 类型依赖软链），随后 reconcile 检测到包的 `dsh.bundle.patch` 声明，自动把插件加入 profile 的 bundles 层栈并读取 `cordis.patch.yml` 接线（entry 为包名 `@abc12524/dsh-openviking`）——**无需手动编辑任何文件**。url/key 通过 Web 设置页配置（设置页需 dsh 侧补丁，见完整安装），或在你自己的 profile patch 层用同名 entry 覆盖 config。
+机制：命令在 profile 目录执行 `pnpm add github:...`（prepare 钩子自动用 `tsdown` 从 `src` 转译出 `lib/`，peer 依赖均 external，无需 harness 类型，只需 node ≥22.18 与自动安装的 devDeps），随后 reconcile 检测到包的 `dsh.bundle.patch` 声明，自动把插件加入 profile 的 bundles 层栈并读取 `cordis.patch.yml` 接线（entry 为包名 `@abc12524/dsh-openviking`）——**无需手动编辑任何文件**。url/key 通过 Web 设置页配置（设置页需 dsh 侧补丁，见完整安装），或在你自己的 profile patch 层用同名 entry 覆盖 config。
 
-> 方式 B 的 prepare 需要完整构建环境（见 `scripts/prepare.mjs`）。本机没有 dsh 检出、只想用插件时，推荐先走**方式 A**（clone 直加载 `src/`，零构建），再按需补 dsh 侧补丁。
+> pnpm 对 git 托管包默认禁止跑 `prepare` 构建脚本：首次安装会在 `profiles/web/pnpm-workspace.yaml` 加一条 `allowBuilds`（报错会打印完整 key，建议锁定 commit `github:abc12524/dsh-openviking#<sha>` 让 key 稳定），再加回即可。本机没有 dsh 检出、只想用插件时，也可直接走**方式 A**（clone 直加载 `src/`，零构建零授权），再按需补 dsh 侧补丁。
 
 ## 依赖
 
@@ -81,17 +81,16 @@ pnpm run build && systemctl restart dsh-web   # 或重启你的 dsh 进程
 
 ## 构建（客户端 bundle）
 
-`tsconfig.json` 已自包含（不 extends dsh 的 tsconfig base、无源码路径别名），构建只需两步：
+`tsconfig.json` 已自包含（不 extends dsh 的 tsconfig base、无源码路径别名）。宿主端与客户端均由 `tsdown` 直接从 `src` 转译（`@deepseek-ai/*` peer 依赖 external，不打包），因此 **git 安装的 `prepare` 不再需要 harness 检出**：
 
 ```bash
-# 1. 把 dsh 检出的 @deepseek-ai/* 包符号链接到 node_modules（10 个包，含仅编译期需要的类型包）
-./scripts/link-deps.sh /path/to/deepseek-harness
-
-# 2. 复用 dsh 检出的 tsc/tsdown 构建（tsc 出 lib/types/，tsdown 出 lib/client.js）
-PATH=/path/to/deepseek-harness/node_modules/.bin:$PATH pnpm run build:client
+pnpm run build        # tsdown：lib/index.js（host）+ lib/client.js（浏览器 bundle）
+pnpm run build:client # 同上但显式标注 client face（等价于 dsh Client pass）
 ```
 
-产物：`lib/types/`（tsc 类型与发射的 JS）+ `lib/client.js`（浏览器 bundle，banner 以 `__ModuleLoader__.load({id:"@abc12524/dsh-openviking"})` 注册）。`lib/` 已 gitignore，不入库。完整 `pnpm run build`（host lib + client bundle）等价于 dsh 的 Client pass（`DSH_BUILD_FACE=client`）。
+类型检查（可选，开发者用）仍需 harness 类型：`link-deps.sh` 链好 `@deepseek-ai/*` 后 `pnpm run build:types`。
+
+产物：`lib/index.js` + `lib/client.js`（banner 以 `__ModuleLoader__.load({id:"@abc12524/dsh-openviking"})` 注册）。`lib/` 已 gitignore，不入库（git 安装由 prepare 现构建）。
 
 ## ov 工具系列（REST，非 MCP）
 
