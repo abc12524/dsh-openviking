@@ -218,7 +218,3 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
   // change callback); disclosure is no longer toggled at runtime.
   return (): void => {}
 }
-  }
-  syncVisibility()
-  return syncVisibility
-}
