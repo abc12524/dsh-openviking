@@ -11,6 +11,7 @@
     "rewriteRelativeImportExtensions": true,
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
+    "types": ["node", "react"],
     "rootDir": "src",
     "outDir": "lib/types",
     "declaration": true,

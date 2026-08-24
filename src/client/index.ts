@@ -1,25 +1,17 @@
 /**
  * OpenViking settings plugin, browser half: registers the OpenViking card on
  * the Web Settings plugin-configuration surface over the `openviking` settings
- * namespace.
- *
- * The plugin-owned settings surface ships in two generations. rc.7+ (PR #2404,
- * "plugin-owned settings surface") declares `settings.plugin.item` as a keyed
- * slot whose key is the settings namespace a card edits; earlier harnesses
- * declare the same slot as a list keyed by id/order. `slots.inject` runs its
- * callback exactly when the slot's declaration is live, so the kind read from
- * the declaration tree is authoritative on either side and one card serves
- * both generations without a harness-version probe.
+ * namespace (`settings.plugin.item`, keyed by namespace).
  */
 
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import type { LiveSlotNode } from '@deepseek-ai/dsh-client-ui-slots'
 // Type-only: the keyed slot's declaration lives with its declarer; a value
 // import would fail the client bundle-purity gate.
 import type {} from '@deepseek-ai/dsh-client-ui-settings-plugins/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type { OpenVikingCardFace } from './openviking-card-controller.ts'
 import {
+  OPENVIKING_NS,
   OpenVikingCardController,
   type OpenVikingSectionValue,
 } from './openviking-card-controller.ts'
@@ -27,7 +19,6 @@ import { OpenVikingCard } from './OpenVikingCard.tsx'
 import { en, zh, type OpenVikingKey } from './locales.ts'
 
 export {
-  OPENVIKING_NS,
   OpenVikingCardController,
   type OpenVikingCardFace,
   type OpenVikingCardState,
@@ -52,8 +43,7 @@ const NS = 'settings.openviking'
 export const inject = ['slots', 'locale', 'connection', 'settingsScope']
 
 /**
- * Register the OpenViking card once the `settings.plugin.item` declaration is
- * live.
+ * Register the OpenViking card on the keyed `settings.plugin.item` slot.
  * @param ctx - client root context.
  */
 export function apply(ctx: ClientContext): void {
@@ -65,44 +55,11 @@ export function apply(ctx: ClientContext): void {
   const face = (): OpenVikingCardFace => controller.inject()
 
   ctx.slots.inject('settings.plugin.item', function* () {
-    // Which generation declared the slot: rc.7+ keys cards by namespace,
-    // earlier harnesses list them by id/order. The runtime core validates
-    // the shape per kind; the static SlotMap only knows the build's kind, so
-    // the legacy branch erases the option type (the fields are genuine
-    // list-slot options the current kind's type does not declare).
-    if (findSlotKind(ctx, 'settings.plugin.item') === 'keyed') {
-      yield ctx.slots.register({
-        name: 'settings.plugin.item',
-        key: OPENVIKING_NS,
-        locale: NS,
-        inject: face,
-      } as never, OpenVikingCard)
-    } else {
-      yield ctx.slots.register({
-        name: 'settings.plugin.item',
-        id: OPENVIKING_NS,
-        order: 30,
-        locale: NS,
-        inject: face,
-      } as never, OpenVikingCard)
-    }
+    yield ctx.slots.register({
+      name: 'settings.plugin.item',
+      key: OPENVIKING_NS,
+      locale: NS,
+      inject: face,
+    }, OpenVikingCard)
   })
-}
-
-/**
- * Walk the slots declaration tree for a key and return its declared kind.
- * @param ctx - client root context.
- * @param key - the slot key to find.
- * @returns the declared kind, or undefined when the slot is not declared.
- */
-function findSlotKind(ctx: ClientContext, key: string): LiveSlotNode['kind'] | undefined {
-  const visit = (nodes: readonly LiveSlotNode[]): LiveSlotNode['kind'] | undefined => {
-    for (const node of nodes) {
-      if (node.name === key) return node.kind
-      const found = visit(node.children)
-      if (found !== undefined) return found
-    }
-    return undefined
-  }
-  return visit(ctx.slots.snapshot())
 }

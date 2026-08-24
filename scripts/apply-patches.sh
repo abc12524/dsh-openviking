@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 在 dsh 检出里一键应用 dsh-openviking 的必需补丁（0001-0004）。
+# 在 dsh 检出里一键应用 dsh-openviking 的必需补丁（0001-0003）。
 # 用法: ./scripts/apply-patches.sh <dsh 检出路径> [--all]
 #   --all   连可选补丁（0005-0008）一起应用
 # 例:   ./scripts/apply-patches.sh /app
@@ -24,14 +24,6 @@ for p in "$PATCHES"/000{1,2,3}-*.patch; do
   echo "== 应用 $(basename "$p") =="
   git apply "$p"
 done
-
-# 0004 只对旧版 dsh（< rc.7）需要：rc.7+ (#2404) 上游已移除 settings 白名单
-if grep -q "WEB_SETTINGS_NAMESPACES" packages/host/apiproxy/src/api-proxy.ts 2>/dev/null; then
-  echo "== 应用 0004-apiproxy-openviking-settings-whitelist.patch（旧版 dsh 需要）=="
-  git apply "$PATCHES"/0004-*.patch
-else
-  echo "== 跳过 0004（rc.7+ 已移除 settings 白名单，无需应用）=="
-fi
 
 if [ "$ALL" = "--all" ]; then
   for p in "$PATCHES"/000{5,6,7,8}-*.patch; do

@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-openviking",
+  "name": "@abc12524/dsh-openviking",
   "description": "OpenViking memory integration: Web Settings plugin card + automatic memory-context injection",
   "version": "0.1.0",
   "keywords": [
@@ -16,6 +16,9 @@
     "url": "git+https://github.com/abc12524/dsh-openviking.git"
   },
   "homepage": "https://github.com/abc12524/dsh-openviking#readme",
+  "engines": {
+    "node": ">=22.18"
+  },
   "publishConfig": {
     "access": "public"
   },
@@ -32,7 +35,6 @@
       "default": "./lib/client.js"
     },
     "./cordis.patch.yml": "./cordis.patch.yml",
-    "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
   "dsh": {
@@ -56,7 +58,7 @@
     "build:types": "tsc -p tsconfig.json",
     "build:client": "tsc -p tsconfig.json && tsdown --env.DSH_BUILD_FACE client",
     "build": "tsc -p tsconfig.json && tsdown",
-    "prepare": "npm run build"
+    "prepare": "node scripts/prepare.mjs"
   },
   "files": [
     "cordis.patch.yml",
