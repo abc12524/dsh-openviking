@@ -8,6 +8,7 @@ export type OpenVikingKey =
   | 'minScore' | 'minScoreHint'
   | 'maxResults' | 'maxResultsHint'
   | 'overridden' | 'reset' | 'invalidNumber'
+  | 'expand' | 'collapse'
   | 'save' | 'saving' | 'discard' | 'saveFailed'
 
 /** Chinese copy. */
@@ -26,6 +27,8 @@ export const zh: Record<OpenVikingKey, string> = {
   overridden: '已覆盖',
   reset: '重置',
   invalidNumber: '请填数字；留空表示使用默认值。',
+  expand: '展开',
+  collapse: '折叠',
   save: '保存',
   saving: '保存中…',
   discard: '放弃修改',
@@ -48,6 +51,8 @@ export const en: Record<OpenVikingKey, string> = {
   overridden: 'Overridden',
   reset: 'Reset',
   invalidNumber: 'Enter a number, or leave blank to use the default.',
+  expand: 'Expand',
+  collapse: 'Collapse',
   save: 'Save',
   saving: 'Saving…',
   discard: 'Discard',

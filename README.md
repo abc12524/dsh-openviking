@@ -17,57 +17,48 @@ DeepSeek Harness (dsh) 的 OpenViking 长期记忆集成插件。
 2. 把仓库里的 `cordis.patch.yml.example` 的 insert 块复制到 dsh profile 的 patch 层（`~/.dsh/profiles/web/cordis.patch.yml` 或 `~/.dsh/cordis.patch.yml`），`name` 改为实际路径，`config` 直接填 url/key
 3. 重启 dsh —— 检索注入立即可用
 
-原理：host 半段由 tsx 直接加载 `src/`，无需构建；检索是 silent-by-design（url/key 留空也不报错不阻塞）。Web 设置页卡片需要 client bundle 补丁 0002，局域网访问还需补丁 0001/0003 —— 需要时再走下方完整安装。
+ 原理：host 半段由 tsx 直接加载 `src/`，无需构建；检索是 silent-by-design（url/key 留空也不报错不阻塞）。Web 设置页卡片由 harness 外部插件机制原生加载（无需任何 dsh 侧补丁），localhost 直接可见；仅局域网访问才需下方补丁。
 
 **方式 B：官方插件 CLI（一条命令，推荐）**
 
 ```sh
-# 在 dsh 检出目录执行
+# 在 dsh 检出目录执行（纯拷贝安装，无需构建/授权）
 pnpm dsh plugin --profile web add github:abc12524/dsh-openviking
 # 重启 dsh web
 ```
 
-机制：仓库已预构建并提交 `lib/`（host `lib/index.js` + 浏览器 `lib/client.js`），且包**不含 `dependencies`/`devDependencies`/`prepare`**——`dsh plugin add` 只做纯拷贝接线，不触发任何 `npm install` 或构建，因此**无需 `allowBuilds` 授权、无需 harness 检出、无需 `link-deps.sh`**。reconcile 检测到包的 `dsh.bundle.patch` 声明，自动把插件加入 profile 的 bundles 层栈并读取 `cordis.patch.yml` 接线（entry 为包名 `@abc12524/dsh-openviking`）——**无需手动编辑任何文件**。url/key 通过 Web 设置页配置（设置页需 dsh 侧补丁，见完整安装），或在你自己的 profile patch 层用同名 entry 覆盖 config。
+> 可锁定到具体提交以获得可复现安装：`...add github:abc12524/dsh-openviking#<commit>`。安装后在 **设置 → 插件 → OpenViking** 填写服务地址与密钥即可，无需重启。
+
+机制：仓库已预构建并提交 `lib/`（host `lib/index.js` + 浏览器 `lib/client.js`），且包**不含 `dependencies`/`devDependencies`/`prepare`**——`dsh plugin add` 只做纯拷贝接线，不触发任何 `npm install` 或构建，因此**无需 `allowBuilds` 授权、无需 harness 检出、无需 `link-deps.sh`**。reconcile 检测到包的 `dsh.bundle.patch` 声明，自动把插件加入 profile 的 bundles 层栈并读取 `cordis.patch.yml` 接线（entry 为包名 `@abc12524/dsh-openviking`）——**无需手动编辑任何文件**。url/key 通过 Web 设置页配置（**设置 → 插件 → OpenViking**），或在你自己的 profile patch 层用同名 entry 覆盖 config。
 
 ## 依赖
 
 - 运行时 peer 依赖由 DeepSeek Harness 注入（`@deepseek-ai/*` 与 `react`），插件包本身不含任何需安装的 `dependencies`/`devDependencies`。
 - 一个 OpenViking 记忆服务（REST 端点，如 `http://<host>:1933`，无需 `/mcp` 后缀）。
 
-## 安装（完整：设置页 + 远程访问）
+## 远程访问与局域网（可选补丁）
 
-推荐先用 `dsh plugin --profile web add github:abc12524/dsh-openviking` 装包接线（见快速开始方式 B），再按本节补 dsh 侧补丁。也可以手动接线：插件从 TS 源码加载，把仓库里的 `cordis.patch.yml.example` 的 insert 块复制到 dsh profile 的 patch 层（`cordis.patch.yml`）：
-
-```yaml
-- insert:
-    - id: openviking
-      name: '/path/to/dsh-openviking/src/index.ts'
-      config:
-        url: http://<openviking-host>:1933
-        key: '<bearer-token>'
-        minScore: 0.4
-```
-
-Web 设置页的卡片由 harness 的「外部插件客户端」机制**原生加载**：只要插件包的 `package.json` 带正确的 `dsh.client` 声明（本包已配置 `platform: web` + `external` 列出所依赖的 `@deepseek-ai/dsh-client-*` 模块），harness 会把 `lib/client.js` 以 `/plugins/<pkg>/client.js` 提供给前端，**无需任何 dsh 侧补丁**，localhost 直接可见。`patches/` 仅用于 **局域网 / `--trusted-host`** 与 **host-mode 设置域** 场景（见下表），本地使用可全部跳过。
+设置页卡片在 **localhost** 下随「方式 B」安装后**自动出现**，位于 **设置 → 插件（Plugins）→ OpenViking**——无需任何 dsh 侧补丁。本节约用于 **局域网 / `--trusted-host`** 或 **host-mode 设置域** 下访问时才需要的 harness 补丁。
 
 ```sh
-# 仅在需要局域网访问时才需要；本地跳过即可
+# 仅局域网/远程访问时需要；本地使用可跳过
 /path/to/dsh-openviking/scripts/apply-patches.sh /path/to/deepseek-harness
 ```
 
 （可选补丁加 `--all`；也可手动 `git apply`，清单如下。）
 
-| 补丁 | 必需 | 作用 |
+| 补丁 | 适用 | 作用 |
 |---|---|---|
 | `0001-connection-privileged-methods-trusted-host.patch` | 局域网 | 特权 API（settings/credentials/agentPreset 等）在 `--trusted-host` 下放行，LAN 可写 |
-| `0002-client-modules-path-entry-resolution.patch` | 不需要 | 早期为「路径型插件 entry」补的前端 manifest 解析；当前 harness 已原生支持外部插件客户端加载，本包无需此补丁 |
 | `0003-settings-scope-host-mode.patch` | 局域网 | LAN 访问时设置页不再降级 memory（否则恒显"设置服务不可用"） |
 | `0005-ui-settings-models-welcome-notice-host-mode.patch` | 可选 | 内测声明弹窗不再每次刷新都弹 |
 | `0006-web-app-allow-bind-0.0.0.0.patch` | 可选 | 允许 `--host 0.0.0.0`（Docker/无反代场景；上游出于安全故意拒绝） |
 | `0007-web-main-randomuuid-polyfill.patch` | 可选 | 明文 HTTP（非 secure context）下 `crypto.randomUUID` polyfill；HTTPS 不需要 |
 | `0008-frontend-static-mime-png-webp.patch` | 可选 | 静态资源 MIME 补全 `.png`/`.webp` |
 
-> `apply-patches.sh` 已覆盖上表必需补丁（幂等：重复执行自动跳过）。应用后**必须重新构建**（src 与编译产物 lib 需同步，运行时加载的是 lib）并重启：
+> 早期文档提到的 `0002-client-modules-path-entry-resolution.patch` 已**不再需要**：当前 harness 原生支持外部插件客户端加载，本包无需此补丁。
+
+> `apply-patches.sh` 已覆盖上表必需补丁（幂等：重复执行自动跳过）。应用后**必须重新构建** harness 并重启：
 
 ```sh
 # 在 dsh 检出根目录
@@ -95,7 +86,7 @@ pnpm run build:client # 同上但显式标注 client face（等价于 dsh Client
 
 插件在 harness 中注册一组 `openviking_*` 工具，与自动记忆注入共用同一套 REST 客户端，直接调用 OpenViking REST API（v1），不经由 ov 的 MCP 端点。服务端根地址即设置项中的 `url`（自动兼容残留的 `/mcp` 后缀），鉴权复用同一 bearer token。
 
-**渐进披露**：`url`/`key` 未配置时，这组工具会通过 `ctx.tools.restrict({ deny })` 从模型的工具提示中隐藏（注册仍在，只是不可见、不可调用）；在设置页填好地址与密钥后会即时显示，无需重启。
+**渐进披露**：`url`/`key` 未配置时，这组工具根本不会注册（宿主全局 `ctx.tools.restrict` 需要 agent 作用域，不能在插件全局上下文调用，故改为按配置动态注册/注销）；在设置页填好地址与密钥后会即时注册显示，无需重启。
 
 | 工具 | 说明 | 关键参数 |
 |------|------|----------|
@@ -117,7 +108,7 @@ pnpm run build:client # 同上但显式标注 client face（等价于 dsh Client
 
 ## 设置卡片
 
-浏览器侧把配置表单注册进设置页的**插件配置区域**（`settings.plugin.item` 槽，以 `key: 'openviking'` 接线已注册的命名空间），显示在 Plugins 区域的「Plugin configuration」tab。卡片组件自绘（折叠头、未保存徽标、只读横幅、逐字段「已覆盖」标记与重置），不 import 官方卡片 chrome —— client bundle-purity 门禁禁止跨插件 value import。命名空间不可用时卡片渲染为空（未接线的部署在设置页不留痕迹）。
+浏览器侧把配置表单注册进 **设置 → 插件（Plugins）→ OpenViking** 卡片（`settings.plugin.item` 槽，以 `key: 'openviking'` 接线已注册的命名空间），与其他可配置插件（如 Bash、Web Search）并列显示。卡片组件自绘（折叠头、未保存徽标、只读横幅、逐字段「已覆盖」标记与重置），不 import 官方卡片 chrome —— client bundle-purity 门禁禁止跨插件 value import。命名空间不可用时卡片渲染为空（未接线的部署在设置页不留痕迹）。
 
 ## 设置项
 
@@ -128,8 +119,8 @@ pnpm run build:client # 同上但显式标注 client face（等价于 dsh Client
 | API Key | 完整 Bearer token（敏感字段，保存后不回显，以 `****` 掩码显示） |
 | Relevance threshold | 只注入相关性**高于**此值的候选（0-1），默认 0.4 |
 | Result count | 每次提问最多注入的候选记忆条数，默认 3 |
-| MCP timeout (ms) | 单次 REST 请求超时（毫秒），默认 8000 |
-| Max abstract chars | 每条候选摘要截断长度（字符），默认 400 |
+
+> 其余参数（单次 REST 超时、摘要截断长度）使用 host 端 `Config` schema 的默认值（8000ms / 400 字符），当前设置卡片不暴露，需要时可改 composition 配置或后续扩展卡片。
 
 ## 许可证
 

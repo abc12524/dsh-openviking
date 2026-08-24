@@ -40,9 +40,10 @@ export const OV_TOOL_NAMES = [
 
 /**
  * Register the nine `openviking_*` tools into the harness tool registry, and
- * return a `syncVisibility` callback that hides them from the model-facing
- * tool list (via `ctx.tools.restrict`) whenever the memory server is
- * unconfigured. Call it on every config change to keep disclosure live.
+ * return a `syncVisibility` callback that registers them only while the memory
+ * server is configured (unconfigured => not registered at all, so they never
+ * appear in the model-facing tool list). Call it on every config change to keep
+ * disclosure live.
  * @param ctx - plugin context; the registrations are disposed with it.
  * @param getConfig - live config getter (url/key/user/timeoutMs).
  * @returns `syncVisibility`, to invoke when the resolved config changes.
@@ -204,9 +205,10 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
   // Progressive disclosure: register the `openviking_*` tools only while the
   // memory server is configured, so an unconfigured deployment never advertises
   // them in the model's tool prompt. Registration is toggled on every config
-  // change (the host subscribes to the settings scope). `ctx.tools.restrict`
-  // is intentionally avoided: it requires a scoped (agent) context and would
-  // mask every agent if called from the plugin-global context.
+  // change (the host subscribes to the settings scope). Dynamic
+  // register/unregister is used instead of `ctx.tools.restrict`, which requires
+  // a scoped (agent) context and would mask every agent from the plugin-global
+  // context.
   let disposers: Array<() => void> = []
   const syncVisibility = (): void => {
     const c = getConfig()

@@ -118,6 +118,7 @@ export function OpenVikingCard({ t, ...props }: OpenVikingCardProps) {
       <button
         type="button"
         aria-expanded={open}
+        aria-label={`${t(open ? 'collapse' : 'expand')}: ${t('title')}`}
         onClick={() => { setOpen(!open) }}
         style={{
           display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '12px 14px',
