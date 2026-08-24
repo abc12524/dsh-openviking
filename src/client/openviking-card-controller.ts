@@ -16,6 +16,7 @@ import type {
   SnapshotStore,
 } from '@deepseek-ai/dsh-client-runtime/client'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+import { useSyncExternalStore } from 'react'
 
 /** The openviking settings namespace, spelled here (client must not import host). */
 export const OPENVIKING_NS = 'openviking'
@@ -77,10 +78,8 @@ export interface OpenVikingCardState {
 
 /** The registration-side face the card's slot entry injects. */
 export interface OpenVikingCardFace {
-  hooks: {
-    /** Card snapshot bound by the renderer as useOpenVikingCard. */
-    openvikingCard: SnapshotStore<OpenVikingCardState>
-  }
+  /** Card snapshot bound by the renderer as useOpenVikingCard. */
+  useOpenVikingCard: <R>(selector: (state: OpenVikingCardState) => R) => R
   /** Stage draft text for one field. */
   edit: (field: OpenVikingField, text: string) => void
   /** Stage a clear, so saving lets the field re-inherit the composition layer. */
@@ -104,6 +103,7 @@ const NUMERIC_FIELDS: ReadonlySet<OpenVikingField> = new Set(['minScore', 'maxRe
 export class OpenVikingCardController {
   private readonly staged = new Map<OpenVikingField, Staged>()
   private readonly store: SnapshotStore<OpenVikingCardState>
+  private readonly subscribe: (fn: () => void) => () => void
   private saving = false
   private failed = false
 
@@ -112,13 +112,15 @@ export class OpenVikingCardController {
    */
   constructor(private readonly scope: SettingsScope<OpenVikingSectionValue>) {
     this.store = createSnapshotStore(this.projection())
+    this.subscribe = this.store.subscribe.bind(this.store)
     scope.subscribe(() => { this.store.set(this.projection()) })
   }
 
   /** Build the face the card's slot registration injects. */
   inject(): OpenVikingCardFace {
     return {
-      hooks: { openvikingCard: this.store },
+      useOpenVikingCard: <R,>(selector: (state: OpenVikingCardState) => R): R =>
+        useSyncExternalStore(this.subscribe, () => selector(this.store.getSnapshot())),
       edit: (field, text) => { this.stage(field, { kind: 'edit', text }) },
       resetField: (field) => { this.stage(field, { kind: 'clear' }) },
       save: () => { void this.save() },
