@@ -23,18 +23,16 @@ DeepSeek Harness (dsh) 的 OpenViking 长期记忆集成插件。
 
 ```sh
 # 在 dsh 检出目录执行
-dsh plugin --profile web add github:abc12524/dsh-openviking
+pnpm dsh plugin --profile web add github:abc12524/dsh-openviking
 # 重启 dsh web
 ```
 
-机制：命令在 profile 目录执行 `pnpm add github:...`（prepare 钩子自动用 `tsdown` 从 `src` 转译出 `lib/`，peer 依赖均 external，无需 harness 类型，只需 node ≥22.18 与自动安装的 devDeps），随后 reconcile 检测到包的 `dsh.bundle.patch` 声明，自动把插件加入 profile 的 bundles 层栈并读取 `cordis.patch.yml` 接线（entry 为包名 `@abc12524/dsh-openviking`）——**无需手动编辑任何文件**。url/key 通过 Web 设置页配置（设置页需 dsh 侧补丁，见完整安装），或在你自己的 profile patch 层用同名 entry 覆盖 config。
-
-> pnpm 对 git 托管包默认禁止跑 `prepare` 构建脚本：首次安装会在 `profiles/web/pnpm-workspace.yaml` 加一条 `allowBuilds`（报错会打印完整 key，建议锁定 commit `github:abc12524/dsh-openviking#<sha>` 让 key 稳定），再加回即可。本机没有 dsh 检出、只想用插件时，也可直接走**方式 A**（clone 直加载 `src/`，零构建零授权），再按需补 dsh 侧补丁。
+机制：仓库已预构建并提交 `lib/`（host `lib/index.js` + 浏览器 `lib/client.js`），且包**不含 `dependencies`/`devDependencies`/`prepare`**——`dsh plugin add` 只做纯拷贝接线，不触发任何 `npm install` 或构建，因此**无需 `allowBuilds` 授权、无需 harness 检出、无需 `link-deps.sh`**。reconcile 检测到包的 `dsh.bundle.patch` 声明，自动把插件加入 profile 的 bundles 层栈并读取 `cordis.patch.yml` 接线（entry 为包名 `@abc12524/dsh-openviking`）——**无需手动编辑任何文件**。url/key 通过 Web 设置页配置（设置页需 dsh 侧补丁，见完整安装），或在你自己的 profile patch 层用同名 entry 覆盖 config。
 
 ## 依赖
 
-- DeepSeek Harness 源码检出（需含已构建的包；`scripts/link-deps.sh` 会从它链接 `@deepseek-ai/*` 依赖）。
-- 一个 OpenViking 记忆服务（MCP Streamable HTTP 端点，如 `http://<host>:1933/mcp`）。
+- 运行时 peer 依赖由 DeepSeek Harness 注入（`@deepseek-ai/*` 与 `react`），插件包本身不含任何需安装的 `dependencies`/`devDependencies`。
+- 一个 OpenViking 记忆服务（REST 端点，如 `http://<host>:1933`，无需 `/mcp` 后缀）。
 
 ## 安装（完整：设置页 + 远程访问）
 
@@ -90,7 +88,7 @@ pnpm run build:client # 同上但显式标注 client face（等价于 dsh Client
 
 类型检查（可选，开发者用）仍需 harness 类型：`link-deps.sh` 链好 `@deepseek-ai/*` 后 `pnpm run build:types`。
 
-产物：`lib/index.js` + `lib/client.js`（banner 以 `__ModuleLoader__.load({id:"@abc12524/dsh-openviking"})` 注册）。`lib/` 已 gitignore，不入库（git 安装由 prepare 现构建）。
+产物：`lib/index.js` + `lib/client.js`（banner 以 `__ModuleLoader__.load({id:"@abc12524/dsh-openviking"})` 注册）。`lib/` 已提交入库——git 安装直接复用，无需现场构建。本地改 `src/` 后跑 `pnpm run build` 刷新 `lib/` 并提交即可。
 
 ## ov 工具系列（REST，非 MCP）
 
