@@ -48,9 +48,10 @@ pnpm dsh plugin --profile web add github:abc12524/dsh-openviking
         minScore: 0.4
 ```
 
-要让 Web 设置页显示表单，还需要在 dsh 侧应用 `patches/` 中的补丁（已在本机验证，基于 dsh 上游 `47f943859b` 导出）。一条命令应用必需补丁：
+Web 设置页的卡片由 harness 的「外部插件客户端」机制**原生加载**：只要插件包的 `package.json` 带正确的 `dsh.client` 声明（本包已配置 `platform: web` + `external` 列出所依赖的 `@deepseek-ai/dsh-client-*` 模块），harness 会把 `lib/client.js` 以 `/plugins/<pkg>/client.js` 提供给前端，**无需任何 dsh 侧补丁**，localhost 直接可见。`patches/` 仅用于 **局域网 / `--trusted-host`** 与 **host-mode 设置域** 场景（见下表），本地使用可全部跳过。
 
 ```sh
+# 仅在需要局域网访问时才需要；本地跳过即可
 /path/to/dsh-openviking/scripts/apply-patches.sh /path/to/deepseek-harness
 ```
 
@@ -58,9 +59,9 @@ pnpm dsh plugin --profile web add github:abc12524/dsh-openviking
 
 | 补丁 | 必需 | 作用 |
 |---|---|---|
-| `0001-connection-privileged-methods-trusted-host.patch` | ✅ | 特权 API（settings/credentials/agentPreset 等）在 `--trusted-host` 下放行，LAN 可写 |
-| `0002-client-modules-path-entry-resolution.patch` | ✅ | 路径型插件 entry 解析 package.json，前端 manifest 能加载本插件（否则设置页静默不显示） |
-| `0003-settings-scope-host-mode.patch` | ✅ | LAN 访问时设置页不再降级 memory（否则恒显"设置服务不可用"） |
+| `0001-connection-privileged-methods-trusted-host.patch` | 局域网 | 特权 API（settings/credentials/agentPreset 等）在 `--trusted-host` 下放行，LAN 可写 |
+| `0002-client-modules-path-entry-resolution.patch` | 不需要 | 早期为「路径型插件 entry」补的前端 manifest 解析；当前 harness 已原生支持外部插件客户端加载，本包无需此补丁 |
+| `0003-settings-scope-host-mode.patch` | 局域网 | LAN 访问时设置页不再降级 memory（否则恒显"设置服务不可用"） |
 | `0005-ui-settings-models-welcome-notice-host-mode.patch` | 可选 | 内测声明弹窗不再每次刷新都弹 |
 | `0006-web-app-allow-bind-0.0.0.0.patch` | 可选 | 允许 `--host 0.0.0.0`（Docker/无反代场景；上游出于安全故意拒绝） |
 | `0007-web-main-randomuuid-polyfill.patch` | 可选 | 明文 HTTP（非 secure context）下 `crypto.randomUUID` polyfill；HTTPS 不需要 |
