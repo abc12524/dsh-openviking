@@ -72,7 +72,7 @@ export class OpenVikingRestClient {
   async search(query: string, limit = 3, minScore?: number, signal?: AbortSignal): Promise<string> {
     const { key, timeoutMs } = this.auth()
     const body: Record<string, unknown> = { query, limit }
-    if (minScore !== undefined) body.min_score = minScore
+    if (minScore !== undefined) body.score_threshold = minScore
     return request(this.base(), key, '/api/v1/search/find', {
       method: 'POST',
       body: JSON.stringify(body),
@@ -89,9 +89,9 @@ export class OpenVikingRestClient {
   /** Read one `viking://` file. */
   async readFile(uri: string, signal?: AbortSignal): Promise<string> {
     const { key, timeoutMs } = this.auth()
-    return request(this.base(), key, '/api/v1/fs/read', {
-      method: 'POST',
-      body: JSON.stringify({ uri }),
+    const qs = new URLSearchParams({ uri })
+    return request(this.base(), key, `/api/v1/content/read?${qs.toString()}`, {
+      method: 'GET',
     }, timeoutMs, signal)
   }
 
@@ -107,9 +107,9 @@ export class OpenVikingRestClient {
   /** Write a `viking://` file in create/replace/append mode. */
   async writeFile(uri: string, content: string, mode: 'create' | 'replace' | 'append', signal?: AbortSignal): Promise<string> {
     const { key, timeoutMs } = this.auth()
-    return request(this.base(), key, '/api/v1/fs/write', {
+    return request(this.base(), key, '/api/v1/content/write', {
       method: 'POST',
-      body: JSON.stringify({ uri, content, mode }),
+      body: JSON.stringify({ uri, content, mode, wait: true }),
     }, timeoutMs, signal)
   }
 
@@ -144,9 +144,9 @@ export class OpenVikingRestClient {
   /** Delete a `viking://` file (irreversible). */
   async deleteFile(uri: string, signal?: AbortSignal): Promise<string> {
     const { key, timeoutMs } = this.auth()
-    return request(this.base(), key, '/api/v1/fs/rm', {
-      method: 'POST',
-      body: JSON.stringify({ uri }),
+    const qs = new URLSearchParams({ uri, recursive: 'false' })
+    return request(this.base(), key, `/api/v1/fs?${qs.toString()}`, {
+      method: 'DELETE',
     }, timeoutMs, signal)
   }
 }

@@ -55,7 +55,7 @@ pnpm run build:client # 同上但显式标注 client face（等价于 dsh Client
 | `openviking_commit_session` | 归档 Session 并提取长期记忆 | `session_id`, `keep_recent_count?` |
 | `openviking_delete_file` | 删除 `viking://` 文件（不可撤销） | `uri` |
 
-实现见 `src/ov-client.ts`（REST 客户端）与 `src/ov-tools.ts`（工具定义）。端点路径遵循 OpenViking REST API（`POST /api/v1/search/find`、`/api/v1/fs/read|ls|write|rm`、`/api/v1/sessions`、`/api/v1/sessions/{id}/messages`、`/api/v1/sessions/{id}/commit`）；`remember` 映射到在用户命名空间下写入 `.md` 文件。
+实现见 `src/ov-client.ts`（REST 客户端）与 `src/ov-tools.ts`（工具定义）。端点对齐 OpenViking v0.4.13 REST API：`POST /api/v1/search/find`（阈值字段为 `score_threshold`）、`GET /api/v1/content/read`、`POST /api/v1/content/write`、`GET /api/v1/fs/ls`、`DELETE /api/v1/fs`、`/api/v1/sessions`、`/api/v1/sessions/{id}/messages`、`/api/v1/sessions/{id}/commit`；`remember` 映射到在用户命名空间下写入 `.md` 文件。
 
 ## 部署顺序建议
 
