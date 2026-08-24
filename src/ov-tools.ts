@@ -58,14 +58,14 @@ export function registerOvTools(ctx: Context, getConfig: () => OpenVikingConfig)
     description: '在 OpenViking 外置记忆中语义搜索，查找之前保存的知识、偏好、项目信息等',
     parameters: {
       query: { type: 'string', required: true, description: '搜索关键词，描述要查找什么内容' },
-      limit: { type: 'number', required: false, description: '返回候选条数上限（默认 10）' },
-      min_score: { type: 'number', required: false, description: '最低相关性分数阈值（0-1）' },
+      limit: { type: 'number', required: false, description: '返回候选条数上限（默认 3，模型可覆盖）' },
+      min_score: { type: 'number', required: false, description: '最低相关性分数阈值（0-1，默认 0.4，模型可覆盖）' },
     },
     output: textOutput,
     async execute(args) {
       const query = args.query as string
-      const limit = typeof args.limit === 'number' ? args.limit : 10
-      const minScore = typeof args.min_score === 'number' ? args.min_score : undefined
+      const limit = typeof args.limit === 'number' ? args.limit : 3
+      const minScore = typeof args.min_score === 'number' ? args.min_score : 0.4
       return safe(() => client.search(query, limit, minScore))
     },
   }))

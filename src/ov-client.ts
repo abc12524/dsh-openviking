@@ -69,7 +69,7 @@ export class OpenVikingRestClient {
   }
 
   /** Semantic search (no session context), `openviking_search`. */
-  async search(query: string, limit = 10, minScore?: number, signal?: AbortSignal): Promise<string> {
+  async search(query: string, limit = 3, minScore?: number, signal?: AbortSignal): Promise<string> {
     const { key, timeoutMs } = this.auth()
     const body: Record<string, unknown> = { query, limit }
     if (minScore !== undefined) body.min_score = minScore
