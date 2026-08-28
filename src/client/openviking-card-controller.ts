@@ -13,9 +13,9 @@
 import type {
   SettingsScope,
   SettingsScopeSnapshot,
-  SnapshotStore,
-} from '@deepseek-ai/dsh-client-runtime/client'
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+} from '@deepseek-ai/dsh-client-ui-settings/client'
+import type { SnapshotStore } from '@deepseek-ai/dsh-client-store'
+import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import { useSyncExternalStore } from 'react'
 
 /** The openviking settings namespace, spelled here (client must not import host). */
