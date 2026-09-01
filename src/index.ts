@@ -21,7 +21,7 @@ import z from '@deepseek-ai/schemastery'
 import type { PreStepDecision } from '@deepseek-ai/dsh-agent'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import type { UserMessage } from '@deepseek-ai/dsh-llm'
-import { installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
+import type {} from '@deepseek-ai/dsh-settings'
 import { registerOvTools } from './ov-tools'
 import { OpenVikingRestClient } from './ov-client'
 
@@ -42,7 +42,7 @@ export const name = 'openviking'
 export const inject = ['agents', 'tools']
 
 /** Settings namespace owning this plugin's configuration. */
-export const OPENVIKING_NS = settingsNamespace('openviking')
+export const OPENVIKING_NS = 'openviking' as const
 
 /** The bracketing header/footer around injected candidate memories. */
 export const BLOCK_HEADER = '[自动检索的候选记忆(相关性未经验证可能无关，仅作为背景线索)]'
