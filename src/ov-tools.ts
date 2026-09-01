@@ -13,7 +13,7 @@ import { OpenVikingRestClient, type OvConfig } from './ov-client'
 /** Plain-text output: the tool returns the server response verbatim. */
 const textOutput = {
   schema: { type: 'string' },
-  render: (_args: unknown, value: string) => [{ type: 'text', text: value }],
+  render: (_args: unknown, value: string) => [{ type: 'text' as const, text: value }],
 } as const
 
 /** Wrap a client call so failures surface as `{"error": ...}` text. */
