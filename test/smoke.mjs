@@ -450,7 +450,12 @@ console.log(`case 1  ok  Config: ${VOLATILE_FIELDS.length} volatile fields, cred
     }
     bind(project) {
       this.project = project
-      return { set: () => {}, get: () => this.project() }
+      return {
+        getSnapshot: () => this.project(),
+        subscribe: () => () => {},
+        set: () => {},
+        get: () => this.project(),
+      }
     }
     shell() {
       return { available: true, writable: true, dirty: false, invalid: false, saving: false, failed: false }
@@ -538,7 +543,16 @@ console.log(`case 1  ok  Config: ${VOLATILE_FIELDS.length} volatile fields, cred
     'the slot key must be the bundle package name, or the page renders nothing',
   )
   assert.equal(registered[0].entry.locale, 'settings.openviking')
-  assert.equal(typeof registered[0].entry.inject().hooks.injectSettingsCard, 'object')
+  const face = registered[0].entry.inject()
+  assert.equal(typeof face.hooks.injectSettingsCard, 'object')
+
+  // The page turns every entry of `hooks` into a prop named `use<Capitalized>`
+  // (PropsSlotHooks in dsh-client-slots). The component must read the same
+  // name; a stale one throws on the first render and the bundle's page ends up
+  // with no form at all, which is invisible to a test that hard-codes the prop.
+  const hookNames = Object.keys(face.hooks)
+  const hookProp = `use${hookNames[0].charAt(0).toUpperCase()}${hookNames[0].slice(1)}`
+  const hook = (select) => select(face.hooks[hookNames[0]].getSnapshot())
   assert.equal(localeDicts.length, 1, 'the page owns its dictionary')
   assert.ok(localeDicts[0].dicts.en?.title && localeDicts[0].dicts.zh?.title, 'both locales are supplied')
 
@@ -546,7 +560,7 @@ console.log(`case 1  ok  Config: ${VOLATILE_FIELDS.length} volatile fields, cred
   const summary = registered[0].component({
     view: 'summary',
     t: (key) => key,
-    useOpenvikingSettingsCard: (select) => select({}),
+    [hookProp]: hook,
   })
   assert.equal(typeof summary, 'string')
 
@@ -569,7 +583,7 @@ console.log(`case 1  ok  Config: ${VOLATILE_FIELDS.length} volatile fields, cred
   const tree = registered[0].component({
     view: 'form',
     t: (key) => key,
-    useOpenvikingSettingsCard: (select) => select(formState),
+    [hookProp]: (select) => select(formState),
     save: () => {},
     discard: () => {},
     edit: () => {},
