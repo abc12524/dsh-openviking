@@ -1,0 +1,22 @@
+# Bundle patch layer for dsh-openviking.
+#
+# A single `insert` row loads this package's main entry as the host half (a
+# plain Cordis plugin that publishes the `openviking` service); the `dsh.client`
+# declaration in package.json is what makes the web app load ./client as the
+# browser half.
+#
+# Load order matters only in one direction: `dsh-inject-context` looks the
+# `openviking` service up on every step, not at mount, so either order works —
+# but loading this bundle first means the very first turn already has retrieval
+# available.
+#
+# No `config:` block here on purpose. Every user-facing field is `.volatile()`,
+# so the settings card on the Plugins page owns it and its value belongs in the
+# profile's own patch layer — restating a value here would shadow the form and
+# turn "reset to default" into a no-op. The ordinary fields (scheme, user,
+# account, peer, abstractChars, profileLimit, profileChars, timeoutMs) are
+# edited by adding a `config:` block to this entry in YOUR profile patch, never
+# in this file.
+- insert:
+    - id: dsh-openviking
+      name: dsh-openviking

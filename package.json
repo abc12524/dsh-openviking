@@ -1,0 +1,63 @@
+{
+  "name": "dsh-openviking",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness plugin that serves OpenViking memory retrieval as the `openviking` Cordis service (recall + memory index), with a Plugins-page settings card for host, port, API key, score threshold, and hit count.",
+  "author": "abc12524",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abc12524/dsh-openviking.git"
+  },
+  "homepage": "https://github.com/abc12524/dsh-openviking#readme",
+  "bugs": {
+    "url": "https://github.com/abc12524/dsh-openviking/issues"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "test": "node test/smoke.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-plugin-manager",
+        "@deepseek-ai/dsh-api-remotes"
+      ],
+      "platform": "web"
+    }
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "cordis",
+    "plugin",
+    "openviking",
+    "memory",
+    "retrieval"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/schemastery": "^3.18.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/schemastery": "^3.18.2"
+  }
+}
