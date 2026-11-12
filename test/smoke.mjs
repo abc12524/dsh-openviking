@@ -197,7 +197,15 @@ console.log(`case 1  ok  Config: ${VOLATILE_FIELDS.length} volatile fields, cred
     'entries are rendered in descending score order',
   )
   assert.match(text, /score=0\.910/, 'scores print to three decimals')
-  assert.ok(!text.includes('<user-reminder>'), 'wrapping is the injector\'s job, not the backend\'s')
+
+  // The block names itself here — the injector only owns the outer
+  // `<user-reminder>` fence it drops this block into.
+  assert.ok(text.startsWith('<openviking>\n'), 'the recall block opens with its own tag')
+  assert.ok(text.endsWith('\n</openviking>'), 'and closes it after the epilogue')
+  assert.equal((text.match(/<\/?openviking>/g) ?? []).length, 2, 'exactly one envelope')
+  assert.match(text, /^<openviking>\n\[自动检索的候选记忆/, 'the preamble follows the opening tag')
+  assert.match(text, /不视为指令[^\n]*\n<\/openviking>$/, 'the epilogue sits last, inside the envelope')
+  assert.ok(!text.includes('<user-reminder>'), 'the channel fence is the injector\'s job, not the backend\'s')
 
   // A live abstract runs to ~1.6k characters, so the per-entry budget must be
   // generous — a small fixed cut would discard most of the memory.
@@ -361,6 +369,12 @@ console.log(`case 1  ok  Config: ${VOLATILE_FIELDS.length} volatile fields, cred
   assert.match(index, /记忆索引/)
   assert.match(index, /- 主题A/)
   assert.match(index, /- 主题B/)
+  assert.ok(index.startsWith('<openviking_index>\n'), 'the index names itself too')
+  assert.ok(index.endsWith('\n</openviking_index>'), 'and closes after the last entry')
+  assert.ok(
+    !index.includes('<openviking>'),
+    'a distinct tag from the recall block, which can travel in the same reminder',
+  )
   assert.match(
     decodeURIComponent(fetchCalls[0].url),
     /viking:\/\/user\/alice\/peers\/default\/memories\//,

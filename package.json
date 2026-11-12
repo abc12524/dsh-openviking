@@ -1,7 +1,7 @@
 {
   "name": "dsh-openviking",
-  "version": "0.1.2",
-  "description": "DeepSeek Harness plugin that serves OpenViking memory retrieval as the `openviking` Cordis service (recall + memory index), with a Plugins-page settings card for host, port, API key, score threshold, and hit count.",
+  "version": "0.2.0",
+  "description": "DeepSeek Harness plugin that serves OpenViking memory retrieval as the `openviking` Cordis service: `find()` and `profile()` return finished blocks tagged `<openviking>` / `<openviking_index>`, with a Plugins-page settings card for host, port, API key, score threshold, and hit count.",
   "author": "abc12524",
   "repository": {
     "type": "git",
